@@ -1,0 +1,9 @@
+{
+  "id": "cards4links",
+  "name": "Cards4Links",
+  "version": "1.0.0",
+  "minAppVersion": "1.5.0",
+  "description": "Paste URLs to generate beautiful card-styled links",
+  "author": "",
+  "isDesktopOnly": false
+}
