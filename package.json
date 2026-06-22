@@ -1,6 +1,6 @@
 {
-  "name": "cards4links",
-  "version": "1.0.1",
+  "name": "cards-for-links",
+  "version": "1.0.2",
   "description": "Paste URLs to generate beautiful card-styled links",
   "main": "main.js",
   "type": "module",
