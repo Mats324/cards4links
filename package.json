@@ -12,9 +12,9 @@
   },
   "repository": {
     "type": "git",
-    "url": ""
+    "url": "https://github.com/Mats324/cards4links.git"
   },
-  "license": "MIT",
+  "license": "GPL-3.0-only",
   "devDependencies": {
     "@types/node": "^22.0.0",
     "builtin-modules": "^4.0.0",
