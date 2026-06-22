@@ -26,7 +26,7 @@ export default class Cards4Links extends Plugin {
     });
 
     this.addCommand({
-      id: "cards4links-paste-and-enhance",
+      id: "paste-and-enhance",
       name: "Paste URL and enhance to card link",
       editorCallback: (editor: Editor) => {
         this.manualPasteAndEnhance(editor);
@@ -35,7 +35,7 @@ export default class Cards4Links extends Plugin {
     });
 
     this.addCommand({
-      id: "cards4links-upgrade-old-cards",
+      id: "upgrade-old-cards",
       name: "Add view field to old cardlink cards",
       editorCallback: (editor: Editor) => {
         this.upgradeOldCards(editor);
@@ -43,7 +43,7 @@ export default class Cards4Links extends Plugin {
     });
 
     this.addCommand({
-      id: "cards4links-enhance-selected-url",
+      id: "enhance-selected-url",
       name: "Enhance selected URL to card link",
       editorCheckCallback: (checking: boolean, editor: Editor) => {
         if (!navigator.onLine) return false;

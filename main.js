@@ -680,7 +680,7 @@ var Cards4Links = class extends import_obsidian4.Plugin {
         processor.run(source, el);
       });
       this.addCommand({
-        id: "cards4links-paste-and-enhance",
+        id: "paste-and-enhance",
         name: "Paste URL and enhance to card link",
         editorCallback: (editor) => {
           this.manualPasteAndEnhance(editor);
@@ -688,14 +688,14 @@ var Cards4Links = class extends import_obsidian4.Plugin {
         hotkeys: []
       });
       this.addCommand({
-        id: "cards4links-upgrade-old-cards",
+        id: "upgrade-old-cards",
         name: "Add view field to old cardlink cards",
         editorCallback: (editor) => {
           this.upgradeOldCards(editor);
         }
       });
       this.addCommand({
-        id: "cards4links-enhance-selected-url",
+        id: "enhance-selected-url",
         name: "Enhance selected URL to card link",
         editorCheckCallback: (checking, editor) => {
           if (!navigator.onLine) return false;
