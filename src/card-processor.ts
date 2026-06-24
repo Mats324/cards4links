@@ -3,6 +3,21 @@ import { LinkMetadata, ContentType } from "./metadata-parser";
 import type { ThumbnailPosition, CardView } from "./settings";
 import { EditorExtensions } from "./editor-extensions";
 
+function createSvgIcon(viewBox: string, size: number, ...elements: Array<[string, Record<string, string>]>): SVGSVGElement {
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.setAttribute("viewBox", viewBox);
+  svg.setAttribute("width", String(size));
+  svg.setAttribute("height", String(size));
+  for (const [tag, attrs] of elements) {
+    const el = document.createElementNS("http://www.w3.org/2000/svg", tag);
+    for (const [key, val] of Object.entries(attrs)) {
+      el.setAttribute(key, val);
+    }
+    svg.appendChild(el);
+  }
+  return svg;
+}
+
 function detectContentType(host: string | undefined): ContentType {
   if (!host) return "article";
   const videoHosts = [
@@ -33,7 +48,6 @@ export class CardProcessor {
   constructor(
     private app: App,
     private thumbnailPosition: ThumbnailPosition = "right",
-    private enableWatched: boolean = false,
     private defaultView: CardView = "card"
   ) {}
 
@@ -138,8 +152,12 @@ export class CardProcessor {
         cls: "cards4links-upgrade-btn clickable-icon",
         attr: { "aria-label": "Add view field to card" },
       });
-      upgradeBtn.innerHTML =
-        '<svg viewBox="0 0 24 24" width="14" height="14"><path d="M5 10l7-7 7 7" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 3v18" fill="none" stroke="currentColor" stroke-width="2"/></svg>';
+      upgradeBtn.appendChild(
+        createSvgIcon("0 0 24 24", 14,
+          ["path", { d: "M5 10l7-7 7 7", fill: "none", stroke: "currentColor", "stroke-width": "2" }],
+          ["path", { d: "M12 3v18", fill: "none", stroke: "currentColor", "stroke-width": "2" }]
+        )
+      );
       upgradeBtn.addEventListener("click", (e) => {
         e.stopPropagation();
         container.dataset.view = this.defaultView;
@@ -154,29 +172,7 @@ export class CardProcessor {
       });
     }
 
-    if (this.enableWatched) {
-      const label = data.contentType === "video" ? "Watched" : "Read";
-      const watchBtn = actionsLeft.createEl("button", {
-        cls: "cards4links-watch-btn clickable-icon",
-        attr: {
-          "aria-label": data.watched
-            ? "Mark as Unread"
-            : `Mark as ${label}`,
-        },
-      });
-      watchBtn.innerHTML = data.watched
-        ? '<svg viewBox="0 0 24 24" width="14" height="14"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 12l3 3 5-5" fill="none" stroke="currentColor" stroke-width="2"/></svg>'
-        : '<svg viewBox="0 0 24 24" width="14" height="14"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/></svg>';
-      watchBtn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        const currentlyWatched = container.dataset.watched === "true";
-        const newWatched = !currentlyWatched;
-        container.dataset.watched = newWatched ? "true" : "false";
-        this.updateCardBlock(cardIndex, "watched", newWatched);
-      });
-    }
-
-    // --- Top-right actions (view toggle) ---
+    // --- Top-right actions (view toggle, watch) ---
     const actions = container.createDiv({ cls: "cards4links-actions" });
 
     const viewCycle: CardView[] = ["card", "compact", "minimal"];
@@ -185,8 +181,14 @@ export class CardProcessor {
       cls: "cards4links-view-btn clickable-icon",
       attr: { "aria-label": `View: ${view}` },
     });
-    viewBtn.innerHTML =
-      '<svg viewBox="0 0 24 24" width="14" height="14"><rect x="3" y="3" width="8" height="8" rx="1" fill="none" stroke="currentColor" stroke-width="2"/><rect x="13" y="3" width="8" height="8" rx="1" fill="none" stroke="currentColor" stroke-width="2"/><rect x="3" y="13" width="8" height="8" rx="1" fill="none" stroke="currentColor" stroke-width="2"/><rect x="13" y="13" width="8" height="8" rx="1" fill="none" stroke="currentColor" stroke-width="2"/></svg>';
+    viewBtn.appendChild(
+      createSvgIcon("0 0 24 24", 14,
+        ["rect", { x: "3", y: "3", width: "8", height: "8", rx: "1", fill: "none", stroke: "currentColor", "stroke-width": "2" }],
+        ["rect", { x: "13", y: "3", width: "8", height: "8", rx: "1", fill: "none", stroke: "currentColor", "stroke-width": "2" }],
+        ["rect", { x: "3", y: "13", width: "8", height: "8", rx: "1", fill: "none", stroke: "currentColor", "stroke-width": "2" }],
+        ["rect", { x: "13", y: "13", width: "8", height: "8", rx: "1", fill: "none", stroke: "currentColor", "stroke-width": "2" }]
+      )
+    );
     viewBtn.addEventListener("click", (e) => {
       e.stopPropagation();
       const currentView = (container.dataset.view as CardView) || "card";
@@ -195,7 +197,6 @@ export class CardProcessor {
       this.updateCardBlock(cardIndex, "view", next);
     });
 
-    // --- Watched toggle (always visible, top-right) ---
     const label = data.contentType === "video" ? "Watched" : "Read";
     const watchToggleBtn = actions.createEl("button", {
       cls: "cards4links-watch-toggle clickable-icon",
@@ -205,17 +206,21 @@ export class CardProcessor {
           : `Mark as ${label}`,
       },
     });
-    watchToggleBtn.innerHTML = data.watched
-      ? '<svg viewBox="0 0 24 24" width="14" height="14"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 12l3 3 5-5" fill="none" stroke="currentColor" stroke-width="2"/></svg>'
-      : '<svg viewBox="0 0 24 24" width="14" height="14"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/></svg>';
+    const checkedSvg = createSvgIcon("0 0 24 24", 14,
+      ["circle", { cx: "12", cy: "12", r: "10", fill: "none", stroke: "currentColor", "stroke-width": "2" }],
+      ["path", { d: "M8 12l3 3 5-5", fill: "none", stroke: "currentColor", "stroke-width": "2" }]
+    );
+    const uncheckedSvg = createSvgIcon("0 0 24 24", 14,
+      ["circle", { cx: "12", cy: "12", r: "10", fill: "none", stroke: "currentColor", "stroke-width": "2" }]
+    );
+    watchToggleBtn.appendChild(data.watched ? checkedSvg.cloneNode(true) : uncheckedSvg.cloneNode(true));
     watchToggleBtn.addEventListener("click", (e) => {
       e.stopPropagation();
       const currentlyWatched = container.dataset.watched === "true";
       const newWatched = !currentlyWatched;
       container.dataset.watched = newWatched ? "true" : "false";
-      watchToggleBtn.innerHTML = newWatched
-        ? '<svg viewBox="0 0 24 24" width="14" height="14"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 12l3 3 5-5" fill="none" stroke="currentColor" stroke-width="2"/></svg>'
-        : '<svg viewBox="0 0 24 24" width="14" height="14"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/></svg>';
+      watchToggleBtn.empty();
+      watchToggleBtn.appendChild(newWatched ? checkedSvg.cloneNode(true) : uncheckedSvg.cloneNode(true));
       watchToggleBtn.setAttr(
         "aria-label",
         newWatched ? "Mark as Unread" : `Mark as ${label}`
@@ -248,7 +253,7 @@ export class CardProcessor {
         attr: { src: data.image, draggable: "false" },
       });
       img.addEventListener("error", () => {
-        img.style.display = "none";
+        img.classList.add("cards4links-thumbnail-hidden");
       });
     }
 
@@ -256,11 +261,14 @@ export class CardProcessor {
       cls: "cards4links-copy-url clickable-icon",
       attr: { "aria-label": `Copy URL\n${data.url}` },
     });
-    copyBtn.innerHTML =
-      '<svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>';
+    copyBtn.appendChild(
+      createSvgIcon("0 0 24 24", 16,
+        ["path", { fill: "currentColor", d: "M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" }]
+      )
+    );
     copyBtn.addEventListener("click", (e) => {
       e.stopPropagation();
-      navigator.clipboard.writeText(data.url);
+      void navigator.clipboard.writeText(data.url);
       new Notice("URL copied to clipboard");
     });
 

@@ -13,19 +13,19 @@ export const linkLineRegex =
 export const imageRegex = /\.(gif|jpe?g|tiff?|png|webp|bmp|tga|psd|ai)$/i;
 
 export function isUrl(text: string): boolean {
-  return new RegExp(urlRegex).test(text);
+  return urlRegex.test(text);
 }
 
 export function isImage(text: string): boolean {
-  return new RegExp(imageRegex).test(text);
+  return imageRegex.test(text);
 }
 
 export function isLinkedUrl(text: string): boolean {
-  return new RegExp(linkRegex).test(text);
+  return linkRegex.test(text);
 }
 
 export function extractUrlFromLink(link: string): string {
-  const match = new RegExp(linkRegex).exec(link);
+  const match = linkRegex.exec(link);
   if (!match || match.length < 3) return "";
   return match[2];
 }

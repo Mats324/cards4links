@@ -19,7 +19,6 @@ export default class Cards4Links extends Plugin {
       const processor = new CardProcessor(
         this.app,
         this.settings.thumbnailPosition,
-        this.settings.enableWatched,
         this.settings.defaultView
       );
       processor.run(source, el);
@@ -28,8 +27,8 @@ export default class Cards4Links extends Plugin {
     this.addCommand({
       id: "paste-and-enhance",
       name: "Paste URL and enhance to card link",
-      editorCallback: (editor: Editor) => {
-        this.manualPasteAndEnhance(editor);
+      editorCallback: async (editor: Editor) => {
+        await this.manualPasteAndEnhance(editor);
       },
       hotkeys: [],
     });
@@ -48,7 +47,7 @@ export default class Cards4Links extends Plugin {
       editorCheckCallback: (checking: boolean, editor: Editor) => {
         if (!navigator.onLine) return false;
         if (checking) return true;
-        this.enhanceSelected(editor);
+        void this.enhanceSelected(editor);
         return;
       },
       hotkeys: [{ modifiers: ["Mod", "Shift"], key: "e" }],
@@ -65,17 +64,17 @@ export default class Cards4Links extends Plugin {
     this.addSettingTab(new Cards4LinksSettingTab(this.app, this));
   }
 
-  private enhanceSelected(editor: Editor): void {
+  private async enhanceSelected(editor: Editor): Promise<void> {
     const selected = (EditorExtensions.getSelectedText(editor) || "").trim();
 
     const generator = new CardGenerator(editor, this.settings.defaultView);
 
     for (const line of selected.split(/[\n ]/)) {
       if (isUrl(line)) {
-        generator.convert(line);
+        await generator.convert(line);
       } else if (isLinkedUrl(line)) {
         const url = extractUrlFromLink(line);
-        if (url) generator.convert(url);
+        if (url) await generator.convert(url);
       }
     }
   }
@@ -141,7 +140,7 @@ export default class Cards4Links extends Plugin {
         .onClick(() => {
           const editor = this.getEditor();
           if (!editor) return;
-          this.enhanceSelected(editor);
+          void this.enhanceSelected(editor);
         });
     });
   };
@@ -197,10 +196,11 @@ export default class Cards4Links extends Plugin {
   }
 
   private async loadSettings() {
+    const data = await this.loadData() as Partial<Cards4LinksSettings>;
     this.settings = Object.assign(
       {},
       DEFAULT_SETTINGS,
-      await this.loadData()
+      data
     );
   }
 

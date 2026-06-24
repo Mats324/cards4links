@@ -136,6 +136,10 @@
   transition: transform 200ms ease;
 }
 
+.cards4links-thumbnail-hidden {
+  display: none;
+}
+
 .cards4links-card:hover .cards4links-thumbnail {
   transform: scale(1.02);
 }

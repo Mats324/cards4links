@@ -55,12 +55,8 @@ export class CardGenerator {
   private async fetchMetadata(
     url: string
   ): Promise<LinkMetadata | undefined> {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 5000);
-
     try {
       const res = await requestUrl({ url });
-      clearTimeout(timeout);
 
       if (res.status !== 200) {
         console.log(`Cards4Links: bad response status ${res.status}`);
@@ -70,7 +66,6 @@ export class CardGenerator {
       const parser = new MetadataParser(url, res.text);
       return await parser.parse();
     } catch (e) {
-      clearTimeout(timeout);
       console.log("Cards4Links fetch error:", e);
       return undefined;
     }

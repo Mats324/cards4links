@@ -204,16 +204,16 @@ var linkRegex = /^\[([^[\]]*)\]\((https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9][a-zA-Z
 var linkLineRegex = /\[([^[\]]*)\]\((https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|www\.[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9]+\.[^\s]{2,}|www\.[a-zA-Z0-9]+\.[^\s]{2,})\)/gi;
 var imageRegex = /\.(gif|jpe?g|tiff?|png|webp|bmp|tga|psd|ai)$/i;
 function isUrl(text) {
-  return new RegExp(urlRegex).test(text);
+  return urlRegex.test(text);
 }
 function isImage(text) {
-  return new RegExp(imageRegex).test(text);
+  return imageRegex.test(text);
 }
 function isLinkedUrl(text) {
-  return new RegExp(linkRegex).test(text);
+  return linkRegex.test(text);
 }
 function extractUrlFromLink(link) {
-  const match = new RegExp(linkRegex).exec(link);
+  const match = linkRegex.exec(link);
   if (!match || match.length < 3) return "";
   return match[2];
 }
@@ -317,11 +317,8 @@ var CardGenerator = class {
   }
   fetchMetadata(url) {
     return __async(this, null, function* () {
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 5e3);
       try {
         const res = yield (0, import_obsidian2.requestUrl)({ url });
-        clearTimeout(timeout);
         if (res.status !== 200) {
           console.log(`Cards4Links: bad response status ${res.status}`);
           return void 0;
@@ -329,7 +326,6 @@ var CardGenerator = class {
         const parser = new MetadataParser(url, res.text);
         return yield parser.parse();
       } catch (e) {
-        clearTimeout(timeout);
         console.log("Cards4Links fetch error:", e);
         return void 0;
       }
@@ -347,6 +343,20 @@ var CardGenerator = class {
 
 // src/card-processor.ts
 var import_obsidian3 = require("obsidian");
+function createSvgIcon(viewBox, size, ...elements) {
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.setAttribute("viewBox", viewBox);
+  svg.setAttribute("width", String(size));
+  svg.setAttribute("height", String(size));
+  for (const [tag, attrs] of elements) {
+    const el = document.createElementNS("http://www.w3.org/2000/svg", tag);
+    for (const [key, val] of Object.entries(attrs)) {
+      el.setAttribute(key, val);
+    }
+    svg.appendChild(el);
+  }
+  return svg;
+}
 function detectContentType(host) {
   if (!host) return "article";
   const videoHosts = [
@@ -373,10 +383,9 @@ var NoRequiredParamsError = class extends Error {
   }
 };
 var CardProcessor = class {
-  constructor(app, thumbnailPosition = "right", enableWatched = false, defaultView = "card") {
+  constructor(app, thumbnailPosition = "right", defaultView = "card") {
     this.app = app;
     this.thumbnailPosition = thumbnailPosition;
-    this.enableWatched = enableWatched;
     this.defaultView = defaultView;
     this.source = "";
     this.sections = [];
@@ -466,7 +475,14 @@ var CardProcessor = class {
         cls: "cards4links-upgrade-btn clickable-icon",
         attr: { "aria-label": "Add view field to card" }
       });
-      upgradeBtn.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14"><path d="M5 10l7-7 7 7" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 3v18" fill="none" stroke="currentColor" stroke-width="2"/></svg>';
+      upgradeBtn.appendChild(
+        createSvgIcon(
+          "0 0 24 24",
+          14,
+          ["path", { d: "M5 10l7-7 7 7", fill: "none", stroke: "currentColor", "stroke-width": "2" }],
+          ["path", { d: "M12 3v18", fill: "none", stroke: "currentColor", "stroke-width": "2" }]
+        )
+      );
       upgradeBtn.addEventListener("click", (e) => {
         e.stopPropagation();
         container.dataset.view = this.defaultView;
@@ -481,30 +497,22 @@ view: ${this.defaultView}`;
         upgradeBtn.remove();
       });
     }
-    if (this.enableWatched) {
-      const label2 = data.contentType === "video" ? "Watched" : "Read";
-      const watchBtn = actionsLeft.createEl("button", {
-        cls: "cards4links-watch-btn clickable-icon",
-        attr: {
-          "aria-label": data.watched ? "Mark as Unread" : `Mark as ${label2}`
-        }
-      });
-      watchBtn.innerHTML = data.watched ? '<svg viewBox="0 0 24 24" width="14" height="14"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 12l3 3 5-5" fill="none" stroke="currentColor" stroke-width="2"/></svg>' : '<svg viewBox="0 0 24 24" width="14" height="14"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/></svg>';
-      watchBtn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        const currentlyWatched = container.dataset.watched === "true";
-        const newWatched = !currentlyWatched;
-        container.dataset.watched = newWatched ? "true" : "false";
-        this.updateCardBlock(cardIndex, "watched", newWatched);
-      });
-    }
     const actions = container.createDiv({ cls: "cards4links-actions" });
     const viewCycle = ["card", "compact", "minimal"];
     const viewBtn = actions.createEl("button", {
       cls: "cards4links-view-btn clickable-icon",
       attr: { "aria-label": `View: ${view}` }
     });
-    viewBtn.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14"><rect x="3" y="3" width="8" height="8" rx="1" fill="none" stroke="currentColor" stroke-width="2"/><rect x="13" y="3" width="8" height="8" rx="1" fill="none" stroke="currentColor" stroke-width="2"/><rect x="3" y="13" width="8" height="8" rx="1" fill="none" stroke="currentColor" stroke-width="2"/><rect x="13" y="13" width="8" height="8" rx="1" fill="none" stroke="currentColor" stroke-width="2"/></svg>';
+    viewBtn.appendChild(
+      createSvgIcon(
+        "0 0 24 24",
+        14,
+        ["rect", { x: "3", y: "3", width: "8", height: "8", rx: "1", fill: "none", stroke: "currentColor", "stroke-width": "2" }],
+        ["rect", { x: "13", y: "3", width: "8", height: "8", rx: "1", fill: "none", stroke: "currentColor", "stroke-width": "2" }],
+        ["rect", { x: "3", y: "13", width: "8", height: "8", rx: "1", fill: "none", stroke: "currentColor", "stroke-width": "2" }],
+        ["rect", { x: "13", y: "13", width: "8", height: "8", rx: "1", fill: "none", stroke: "currentColor", "stroke-width": "2" }]
+      )
+    );
     viewBtn.addEventListener("click", (e) => {
       e.stopPropagation();
       const currentView = container.dataset.view || "card";
@@ -519,13 +527,25 @@ view: ${this.defaultView}`;
         "aria-label": data.watched ? "Mark as Unread" : `Mark as ${label}`
       }
     });
-    watchToggleBtn.innerHTML = data.watched ? '<svg viewBox="0 0 24 24" width="14" height="14"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 12l3 3 5-5" fill="none" stroke="currentColor" stroke-width="2"/></svg>' : '<svg viewBox="0 0 24 24" width="14" height="14"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/></svg>';
+    const checkedSvg = createSvgIcon(
+      "0 0 24 24",
+      14,
+      ["circle", { cx: "12", cy: "12", r: "10", fill: "none", stroke: "currentColor", "stroke-width": "2" }],
+      ["path", { d: "M8 12l3 3 5-5", fill: "none", stroke: "currentColor", "stroke-width": "2" }]
+    );
+    const uncheckedSvg = createSvgIcon(
+      "0 0 24 24",
+      14,
+      ["circle", { cx: "12", cy: "12", r: "10", fill: "none", stroke: "currentColor", "stroke-width": "2" }]
+    );
+    watchToggleBtn.appendChild(data.watched ? checkedSvg.cloneNode(true) : uncheckedSvg.cloneNode(true));
     watchToggleBtn.addEventListener("click", (e) => {
       e.stopPropagation();
       const currentlyWatched = container.dataset.watched === "true";
       const newWatched = !currentlyWatched;
       container.dataset.watched = newWatched ? "true" : "false";
-      watchToggleBtn.innerHTML = newWatched ? '<svg viewBox="0 0 24 24" width="14" height="14"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 12l3 3 5-5" fill="none" stroke="currentColor" stroke-width="2"/></svg>' : '<svg viewBox="0 0 24 24" width="14" height="14"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/></svg>';
+      watchToggleBtn.empty();
+      watchToggleBtn.appendChild(newWatched ? checkedSvg.cloneNode(true) : uncheckedSvg.cloneNode(true));
       watchToggleBtn.setAttr(
         "aria-label",
         newWatched ? "Mark as Unread" : `Mark as ${label}`
@@ -554,7 +574,7 @@ view: ${this.defaultView}`;
         attr: { src: data.image, draggable: "false" }
       });
       img.addEventListener("error", () => {
-        img.style.display = "none";
+        img.classList.add("cards4links-thumbnail-hidden");
       });
     }
     const copyBtn = container.createEl("button", {
@@ -562,10 +582,16 @@ view: ${this.defaultView}`;
       attr: { "aria-label": `Copy URL
 ${data.url}` }
     });
-    copyBtn.innerHTML = '<svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>';
+    copyBtn.appendChild(
+      createSvgIcon(
+        "0 0 24 24",
+        16,
+        ["path", { fill: "currentColor", d: "M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" }]
+      )
+    );
     copyBtn.addEventListener("click", (e) => {
       e.stopPropagation();
-      navigator.clipboard.writeText(data.url);
+      void navigator.clipboard.writeText(data.url);
       new import_obsidian3.Notice("URL copied to clipboard");
     });
     return container;
@@ -662,7 +688,7 @@ var Cards4Links = class extends import_obsidian4.Plugin {
         item.setTitle("Enhance selected URL to card link").setIcon("link").onClick(() => {
           const editor = this.getEditor();
           if (!editor) return;
-          this.enhanceSelected(editor);
+          void this.enhanceSelected(editor);
         });
       });
     };
@@ -674,7 +700,6 @@ var Cards4Links = class extends import_obsidian4.Plugin {
         const processor = new CardProcessor(
           this.app,
           this.settings.thumbnailPosition,
-          this.settings.enableWatched,
           this.settings.defaultView
         );
         processor.run(source, el);
@@ -682,9 +707,9 @@ var Cards4Links = class extends import_obsidian4.Plugin {
       this.addCommand({
         id: "paste-and-enhance",
         name: "Paste URL and enhance to card link",
-        editorCallback: (editor) => {
-          this.manualPasteAndEnhance(editor);
-        },
+        editorCallback: (editor) => __async(this, null, function* () {
+          yield this.manualPasteAndEnhance(editor);
+        }),
         hotkeys: []
       });
       this.addCommand({
@@ -700,7 +725,7 @@ var Cards4Links = class extends import_obsidian4.Plugin {
         editorCheckCallback: (checking, editor) => {
           if (!navigator.onLine) return false;
           if (checking) return true;
-          this.enhanceSelected(editor);
+          void this.enhanceSelected(editor);
           return;
         },
         hotkeys: [{ modifiers: ["Mod", "Shift"], key: "e" }]
@@ -715,16 +740,18 @@ var Cards4Links = class extends import_obsidian4.Plugin {
     });
   }
   enhanceSelected(editor) {
-    const selected = (EditorExtensions.getSelectedText(editor) || "").trim();
-    const generator = new CardGenerator(editor, this.settings.defaultView);
-    for (const line of selected.split(/[\n ]/)) {
-      if (isUrl(line)) {
-        generator.convert(line);
-      } else if (isLinkedUrl(line)) {
-        const url = extractUrlFromLink(line);
-        if (url) generator.convert(url);
+    return __async(this, null, function* () {
+      const selected = (EditorExtensions.getSelectedText(editor) || "").trim();
+      const generator = new CardGenerator(editor, this.settings.defaultView);
+      for (const line of selected.split(/[\n ]/)) {
+        if (isUrl(line)) {
+          yield generator.convert(line);
+        } else if (isLinkedUrl(line)) {
+          const url = extractUrlFromLink(line);
+          if (url) yield generator.convert(url);
+        }
       }
-    }
+    });
   }
   manualPasteAndEnhance(editor) {
     return __async(this, null, function* () {
@@ -779,10 +806,11 @@ ${newContent}\`\`\``
   }
   loadSettings() {
     return __async(this, null, function* () {
+      const data = yield this.loadData();
       this.settings = Object.assign(
         {},
         DEFAULT_SETTINGS,
-        yield this.loadData()
+        data
       );
     });
   }
