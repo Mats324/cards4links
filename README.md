@@ -13,7 +13,13 @@ Turn any URL into a rich visual card with title, description, thumbnail, favicon
 - **Watched/Read Tracking** — Mark video cards as "Watched" and articles as "Read"
 - **Card Groups** — Combine multiple cards in a single block (separate with `---`)
 - **Context Menu** — Right-click any URL to enhance it
+- **Image Placeholder** — Click a broken or missing thumbnail to set a custom image URL
+- **Description Placeholder** — Click to add or edit the card description
 - **Responsive** — Looks great on desktop and mobile
+
+## Demo
+
+![Use Case](assets/Use%20Case%201.gif)
 
 ## How to Use
 

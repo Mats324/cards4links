@@ -397,7 +397,7 @@ var CardProcessor = class {
     if (this.sections.length <= 1) {
       try {
         const data = this.parseYaml(source);
-        el.appendChild(this.renderCard(data, source, 0));
+        this.renderCard(el, data, source, 0, false);
       } catch (error) {
         el.appendChild(this.renderError(error));
       }
@@ -406,7 +406,7 @@ var CardProcessor = class {
       for (let i = 0; i < this.sections.length; i++) {
         try {
           const data = this.parseYaml(this.sections[i]);
-          group.appendChild(this.renderCard(data, this.sections[i], i));
+          this.renderCard(group, data, this.sections[i], i, true);
         } catch (error) {
           group.appendChild(this.renderError(error));
         }
@@ -448,30 +448,15 @@ var CardProcessor = class {
       contentType: detectContentType(yaml.host)
     };
   }
-  renderCard(data, source, cardIndex) {
-    const view = data.view || "card";
-    const needsUpgrade = !/^view:/m.test(source);
-    const container = createDiv({
-      cls: "cards4links-container",
-      attr: {
-        "data-thumbnail": this.thumbnailPosition,
-        "data-view": view,
-        "data-watched": data.watched ? "true" : "false"
-      }
-    });
-    const card = container.createEl("a", {
-      cls: "cards4links-card",
-      attr: { href: data.url }
-    });
-    const main = card.createDiv({ cls: "cards4links-main" });
-    const titleRow = main.createDiv({ cls: "cards4links-title-row" });
-    titleRow.createSpan({
-      cls: "cards4links-title-text",
-      text: data.title
-    });
-    const actionsLeft = container.createDiv({ cls: "cards4links-actions-left" });
+  renderCard(parentEl, data, sectionSource, cardIndex, isGroup) {
+    const view = isGroup ? "card" : data.view || "card";
+    const needsUpgrade = !/^view:/m.test(sectionSource);
+    const actionsBar = createDiv({ cls: "cards4links-actions-bar" });
+    if (!isGroup) {
+      actionsBar.classList.add("cards4links-actions-bar-float");
+    }
     if (needsUpgrade) {
-      const upgradeBtn = actionsLeft.createEl("button", {
+      const upgradeBtn = actionsBar.createEl("button", {
         cls: "cards4links-upgrade-btn clickable-icon",
         attr: { "aria-label": "Add view field to card" }
       });
@@ -485,11 +470,11 @@ var CardProcessor = class {
       );
       upgradeBtn.addEventListener("click", (e) => {
         e.stopPropagation();
-        container.dataset.view = this.defaultView;
+        container.dataset.view = isGroup ? "card" : this.defaultView;
         const oldSource = this.source;
         const newSections = [...this.sections];
         newSections[cardIndex] = newSections[cardIndex] + `
-view: ${this.defaultView}`;
+view: ${isGroup ? "card" : this.defaultView}`;
         const newSource = newSections.join("\n---\n");
         this.replaceBlock(oldSource, newSource);
         this.sections = newSections;
@@ -497,31 +482,32 @@ view: ${this.defaultView}`;
         upgradeBtn.remove();
       });
     }
-    const actions = container.createDiv({ cls: "cards4links-actions" });
-    const viewCycle = ["card", "compact", "minimal"];
-    const viewBtn = actions.createEl("button", {
-      cls: "cards4links-view-btn clickable-icon",
-      attr: { "aria-label": `View: ${view}` }
-    });
-    viewBtn.appendChild(
-      createSvgIcon(
-        "0 0 24 24",
-        14,
-        ["rect", { x: "3", y: "3", width: "8", height: "8", rx: "1", fill: "none", stroke: "currentColor", "stroke-width": "2" }],
-        ["rect", { x: "13", y: "3", width: "8", height: "8", rx: "1", fill: "none", stroke: "currentColor", "stroke-width": "2" }],
-        ["rect", { x: "3", y: "13", width: "8", height: "8", rx: "1", fill: "none", stroke: "currentColor", "stroke-width": "2" }],
-        ["rect", { x: "13", y: "13", width: "8", height: "8", rx: "1", fill: "none", stroke: "currentColor", "stroke-width": "2" }]
-      )
-    );
-    viewBtn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      const currentView = container.dataset.view || "card";
-      const next = viewCycle[(viewCycle.indexOf(currentView) + 1) % viewCycle.length];
-      container.dataset.view = next;
-      this.updateCardBlock(cardIndex, "view", next);
-    });
+    if (!isGroup) {
+      const viewCycle = ["card", "compact", "minimal"];
+      const viewBtn = actionsBar.createEl("button", {
+        cls: "cards4links-view-btn clickable-icon",
+        attr: { "aria-label": `View: ${view}` }
+      });
+      viewBtn.appendChild(
+        createSvgIcon(
+          "0 0 24 24",
+          14,
+          ["rect", { x: "3", y: "3", width: "8", height: "8", rx: "1", fill: "none", stroke: "currentColor", "stroke-width": "2" }],
+          ["rect", { x: "13", y: "3", width: "8", height: "8", rx: "1", fill: "none", stroke: "currentColor", "stroke-width": "2" }],
+          ["rect", { x: "3", y: "13", width: "8", height: "8", rx: "1", fill: "none", stroke: "currentColor", "stroke-width": "2" }],
+          ["rect", { x: "13", y: "13", width: "8", height: "8", rx: "1", fill: "none", stroke: "currentColor", "stroke-width": "2" }]
+        )
+      );
+      viewBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const currentView = container.dataset.view || "card";
+        const next = viewCycle[(viewCycle.indexOf(currentView) + 1) % viewCycle.length];
+        container.dataset.view = next;
+        this.updateCardBlock(cardIndex, "view", next);
+      });
+    }
     const label = data.contentType === "video" ? "Watched" : "Read";
-    const watchToggleBtn = actions.createEl("button", {
+    const watchToggleBtn = actionsBar.createEl("button", {
       cls: "cards4links-watch-toggle clickable-icon",
       attr: {
         "aria-label": data.watched ? "Mark as Unread" : `Mark as ${label}`
@@ -552,11 +538,31 @@ view: ${this.defaultView}`;
       );
       this.updateCardBlock(cardIndex, "watched", newWatched);
     });
+    const container = createDiv({
+      cls: "cards4links-container",
+      attr: {
+        "data-thumbnail": this.thumbnailPosition,
+        "data-view": view,
+        "data-watched": data.watched ? "true" : "false"
+      }
+    });
+    const card = container.createEl("a", {
+      cls: "cards4links-card",
+      attr: { href: data.url }
+    });
+    const main = card.createDiv({ cls: "cards4links-main" });
+    const titleRow = main.createDiv({ cls: "cards4links-title-row" });
+    titleRow.createSpan({
+      cls: "cards4links-title-text",
+      text: data.title
+    });
     if (data.description) {
       main.createDiv({
         cls: "cards4links-description",
         text: data.description
       });
+    } else {
+      this.createDescriptionPlaceholder(main, cardIndex);
     }
     const hostRow = main.createDiv({ cls: "cards4links-host" });
     if (data.favicon) {
@@ -574,8 +580,11 @@ view: ${this.defaultView}`;
         attr: { src: data.image, draggable: "false" }
       });
       img.addEventListener("error", () => {
-        img.classList.add("cards4links-thumbnail-hidden");
+        img.remove();
+        this.createImagePlaceholder(card, cardIndex, data.image);
       });
+    } else {
+      this.createImagePlaceholder(card, cardIndex);
     }
     const copyBtn = container.createEl("button", {
       cls: "cards4links-copy-url clickable-icon",
@@ -594,7 +603,68 @@ ${data.url}` }
       void navigator.clipboard.writeText(data.url);
       new import_obsidian3.Notice("URL copied to clipboard");
     });
-    return container;
+    if (isGroup) {
+      const wrapper = createDiv({ cls: "cards4links-card-wrapper" });
+      wrapper.appendChild(actionsBar);
+      wrapper.appendChild(container);
+      parentEl.appendChild(wrapper);
+    } else {
+      parentEl.appendChild(actionsBar);
+      parentEl.appendChild(container);
+    }
+  }
+  createImagePlaceholder(cardEl, cardIndex, currentImageUrl) {
+    const placeholder = cardEl.createDiv({ cls: "cards4links-img-placeholder" });
+    const svgContainer = placeholder.createDiv({ cls: "cards4links-img-placeholder-icon" });
+    svgContainer.appendChild(
+      createSvgIcon(
+        "0 0 24 24",
+        22,
+        ["rect", { x: "2", y: "2", width: "20", height: "20", rx: "2", fill: "none", stroke: "currentColor", "stroke-width": "2" }],
+        ["path", { d: "M21 15l-5-5L5 21", fill: "none", stroke: "currentColor", "stroke-width": "2", "stroke-linecap": "round", "stroke-linejoin": "round" }],
+        ["path", { d: "M17 6h6M20 3v6", fill: "none", stroke: "currentColor", "stroke-width": "2", "stroke-linecap": "round", "stroke-linejoin": "round" }]
+      )
+    );
+    placeholder.createSpan({
+      cls: "cards4links-img-placeholder-text",
+      text: "Set image"
+    });
+    placeholder.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const modal = new ImagePickerModal(
+        this.app,
+        currentImageUrl,
+        (newUrl) => {
+          this.updateCardBlock(cardIndex, "image", newUrl);
+        }
+      );
+      modal.open();
+    });
+  }
+  createDescriptionPlaceholder(main, cardIndex) {
+    const placeholder = main.createDiv({ cls: "cards4links-description-placeholder" });
+    placeholder.appendChild(
+      createSvgIcon(
+        "0 0 24 24",
+        12,
+        ["path", { d: "M17 3a2.828 2.828 0 114 4L7.5 20.5 2 22l1.5-5.5L17 3z", fill: "none", stroke: "currentColor", "stroke-width": "2", "stroke-linecap": "round", "stroke-linejoin": "round" }]
+      )
+    );
+    placeholder.createSpan({
+      text: "Add description"
+    });
+    placeholder.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const modal = new DescriptionInputModal(
+        this.app,
+        (value) => {
+          this.updateCardBlock(cardIndex, "description", value);
+        }
+      );
+      modal.open();
+    });
   }
   updateCardBlock(cardIndex, field, value) {
     const section = this.sections[cardIndex];
@@ -654,6 +724,103 @@ ${finalContent}
     const container = createDiv({ cls: "cards4links-error" });
     container.setText(`cardlink error: ${error.message}`);
     return container;
+  }
+};
+var ImagePickerModal = class extends import_obsidian3.Modal {
+  constructor(app, currentUrl, onSubmit) {
+    super(app);
+    this.currentUrl = currentUrl != null ? currentUrl : "";
+    this.onSubmit = onSubmit;
+  }
+  onOpen() {
+    const { contentEl } = this;
+    contentEl.addClass("cards4links-modal");
+    contentEl.createEl("h2", { text: "Set card image" });
+    let imageUrl = this.currentUrl;
+    let textInput;
+    new import_obsidian3.Setting(contentEl).setName("Image URL").setDesc("Enter or paste a URL for the card image").addText((text) => {
+      text.setValue(imageUrl);
+      text.onChange((value) => {
+        imageUrl = value;
+      });
+      text.inputEl.focus();
+      text.inputEl.select();
+      textInput = text.inputEl;
+    }).addExtraButton((btn) => {
+      btn.setIcon("clipboard");
+      btn.setTooltip("Paste from clipboard");
+      btn.onClick(() => __async(this, null, function* () {
+        try {
+          const clipboardText = yield navigator.clipboard.readText();
+          if (clipboardText) {
+            imageUrl = clipboardText;
+            textInput.value = clipboardText;
+          }
+        } catch (e) {
+        }
+      }));
+    });
+    new import_obsidian3.Setting(contentEl).addButton((btn) => {
+      btn.setButtonText("Save");
+      btn.setCta();
+      btn.onClick(() => {
+        const url = imageUrl.trim();
+        if (!url) return;
+        const img = new Image();
+        img.onload = () => {
+          this.onSubmit(url);
+          this.close();
+        };
+        img.onerror = () => {
+          new import_obsidian3.Notice("Failed to load image. Please try a different URL.");
+        };
+        img.src = url;
+      });
+    }).addButton((btn) => {
+      btn.setButtonText("Cancel");
+      btn.onClick(() => {
+        this.close();
+      });
+    });
+  }
+  onClose() {
+    this.contentEl.empty();
+  }
+};
+var DescriptionInputModal = class extends import_obsidian3.Modal {
+  constructor(app, onSubmit) {
+    super(app);
+    this.onSubmit = onSubmit;
+  }
+  onOpen() {
+    const { contentEl } = this;
+    contentEl.addClass("cards4links-modal");
+    contentEl.createEl("h2", { text: "Set card description" });
+    let description = "";
+    new import_obsidian3.Setting(contentEl).setName("Description").addTextArea((text) => {
+      text.setValue(description);
+      text.onChange((value) => {
+        description = value;
+      });
+      text.inputEl.rows = 4;
+      text.inputEl.focus();
+    });
+    new import_obsidian3.Setting(contentEl).addButton((btn) => {
+      btn.setButtonText("Save");
+      btn.setCta();
+      btn.onClick(() => {
+        this.onSubmit(description);
+        this.close();
+      });
+    }).addButton((btn) => {
+      btn.setButtonText("Cancel");
+      btn.onClick(() => {
+        this.close();
+      });
+    });
+  }
+  onClose() {
+    this.contentEl.empty();
   }
 };
 
