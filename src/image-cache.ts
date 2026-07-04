@@ -1,4 +1,4 @@
-import { App, TFile, requestUrl } from "obsidian";
+import { App, TFile, TFolder, requestUrl } from "obsidian";
 import type { CacheLocation } from "./settings";
 
 export interface CacheEntry {
@@ -45,8 +45,8 @@ export function getCacheFolderPath(
 }
 
 export async function ensureFolder(app: App, path: string): Promise<void> {
-  const existing = app.vault.getFolderByPath(path);
-  if (existing) return;
+  const existing = app.vault.getAbstractFileByPath(path);
+  if (existing && existing instanceof TFolder) return;
   await app.vault.createFolder(path);
 }
 

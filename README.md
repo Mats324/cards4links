@@ -4,6 +4,7 @@ Paste URLs to generate beautiful card-styled links in Obsidian.
 
 Turn any URL into a rich visual card with title, description, thumbnail, favicon, and host — directly in your editor. No more ugly raw links.
 
+Visit my repo: https://github.com/Mats324/cards4links
 
 ## How to Use
 
@@ -41,7 +42,10 @@ Right-click in the editor → **"Paste URL and enhance to card link"**.
 - **Quick Settings** — `Ctrl+Shift+,` to open plugin settings directly
 
 
-## Views for single cards
+## Views for a single card
+
+![Type of view | 200](assets/Types%20of%20view.png)
+
 
 | View | Description |
 |------|-------------|
@@ -75,6 +79,10 @@ Right-click in the editor → **"Paste URL and enhance to card link"**.
 | Cache Storage | Global folder / Per note |
 | Cache Folder Name | Folder path for cached images (global mode) |
 | Cache TTL | How long before re-downloading (7–180 days / Never) |
+
+## ❤️ Support
+
+[![Donate with PayPal](https://img.shields.io/badge/Donate-PayPal-00457C?logo=paypal&logoColor=white)](https://www.paypal.me/linkpaypalme)
 
 ## License
 

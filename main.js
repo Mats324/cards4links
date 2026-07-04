@@ -85,8 +85,8 @@ function getCacheFolderPath(activeFile, location, folderName) {
 }
 function ensureFolder(app, path) {
   return __async(this, null, function* () {
-    const existing = app.vault.getFolderByPath(path);
-    if (existing) return;
+    const existing = app.vault.getAbstractFileByPath(path);
+    if (existing && existing instanceof import_obsidian.TFolder) return;
     yield app.vault.createFolder(path);
   });
 }
