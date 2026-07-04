@@ -7,6 +7,7 @@ export interface LinkMetadata {
   host?: string;
   favicon?: string;
   image?: string;
+  imageLocal?: string;
   watched?: boolean;
   view?: "card" | "compact" | "minimal";
   contentType?: ContentType;

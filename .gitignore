@@ -1,5 +1,7 @@
 node_modules/
+.opencode/
 skills/
 AGENTS.md
 _plans/
 cards4links-submission/
+opencode.json

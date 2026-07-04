@@ -1,7 +1,16 @@
-import { App, MarkdownView, Modal, Notice, Setting, parseYaml } from "obsidian";
+import { App, MarkdownView, Modal, Notice, Setting, TFile, parseYaml } from "obsidian";
 import { LinkMetadata, ContentType } from "./metadata-parser";
-import type { ThumbnailPosition, CardView } from "./settings";
+import type { ThumbnailPosition, CardView, CardTheme, CacheLocation } from "./settings";
 import { EditorExtensions } from "./editor-extensions";
+import {
+  resolveResourceUrl,
+  getManifest,
+  isExpired,
+  getCacheFolderPath,
+  ensureFolder,
+  downloadImage,
+  addToManifest,
+} from "./image-cache";
 
 function createSvgIcon(viewBox: string, size: number, ...elements: Array<[string, Record<string, string>]>): SVGSVGElement {
   const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
@@ -48,7 +57,12 @@ export class CardProcessor {
   constructor(
     private app: App,
     private thumbnailPosition: ThumbnailPosition = "right",
-    private defaultView: CardView = "card"
+    private defaultView: CardView = "card",
+    private theme: CardTheme = "default",
+    private cacheImages = false,
+    private cacheFolder = "cards4links-cache",
+    private cacheLocation: CacheLocation = "vault-absolute",
+    private cacheTTL = 30
   ) {}
 
   run(source: string, el: HTMLElement): void {
@@ -221,6 +235,7 @@ export class CardProcessor {
         "data-thumbnail": this.thumbnailPosition,
         "data-view": view,
         "data-watched": data.watched ? "true" : "false",
+        "data-theme": this.theme,
       },
     });
 
@@ -259,14 +274,7 @@ export class CardProcessor {
     }
 
     if (data.image) {
-      const img = card.createEl("img", {
-        cls: "cards4links-thumbnail",
-        attr: { src: data.image, draggable: "false" },
-      });
-      img.addEventListener("error", () => {
-        img.remove();
-        this.createImagePlaceholder(card, cardIndex, data.image);
-      });
+      this.renderImage(card, data, cardIndex);
     } else {
       this.createImagePlaceholder(card, cardIndex);
     }
@@ -295,6 +303,75 @@ export class CardProcessor {
     } else {
       parentEl.appendChild(actionsBar);
       parentEl.appendChild(container);
+    }
+  }
+
+  private renderImage(card: HTMLElement, data: LinkMetadata, cardIndex: number): void {
+    const tryLocal = data.imageLocal && this.cacheImages;
+    const doRender = (src: string) => {
+      const img = card.createEl("img", {
+        cls: "cards4links-thumbnail",
+        attr: { src, draggable: "false" },
+      });
+      img.addEventListener("error", () => {
+        if (tryLocal && data.image) {
+          img.remove();
+          doRender(data.image);
+          return;
+        }
+        img.remove();
+        this.createImagePlaceholder(card, cardIndex, data.image);
+      });
+    };
+
+    if (tryLocal) {
+      void resolveResourceUrl(this.app, data.imageLocal!).then((url) => {
+        if (url) {
+          doRender(url);
+          void this.checkTtl(data);
+        } else if (data.image) {
+          doRender(data.image);
+        } else {
+          this.createImagePlaceholder(card, cardIndex);
+        }
+      });
+    } else if (data.image) {
+      doRender(data.image);
+    }
+  }
+
+  private async checkTtl(data: LinkMetadata): Promise<void> {
+    if (!data.imageLocal || this.cacheTTL <= 0 || !data.image) return;
+    const folder = getCacheFolderPath(
+      this.app.workspace.getActiveFile(),
+      this.cacheLocation,
+      this.cacheFolder
+    );
+    const manifest = await getManifest(this.app, folder);
+    const pathParts = data.imageLocal.split("/");
+    const filename = pathParts[pathParts.length - 1];
+    const entry = manifest.files.find((f) => f.filename === filename);
+    if (!entry) return;
+    if (!isExpired(entry, this.cacheTTL)) return;
+
+    try {
+      const buffer = await downloadImage(data.image);
+      const file = this.app.vault.getAbstractFileByPath(data.imageLocal);
+      if (file instanceof TFile) {
+        await this.app.vault.modifyBinary(file, buffer);
+      } else {
+        await ensureFolder(this.app, folder);
+        await this.app.vault.createBinary(data.imageLocal, buffer);
+      }
+      const tf = this.app.vault.getAbstractFileByPath(data.imageLocal);
+      await addToManifest(this.app, folder, {
+        filename,
+        originalUrl: data.image,
+        cachedAt: new Date().toISOString(),
+        size: tf instanceof TFile ? tf.stat.size : 0,
+      });
+    } catch (e) {
+      console.log("Cards4Links: TTL refresh failed", e);
     }
   }
 

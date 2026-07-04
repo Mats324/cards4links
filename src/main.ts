@@ -19,7 +19,12 @@ export default class Cards4Links extends Plugin {
       const processor = new CardProcessor(
         this.app,
         this.settings.thumbnailPosition,
-        this.settings.defaultView
+        this.settings.defaultView,
+        this.settings.theme,
+        this.settings.cacheImages,
+        this.settings.cacheFolder,
+        this.settings.cacheLocation,
+        this.settings.cacheTTL
       );
       processor.run(source, el);
     });
@@ -53,6 +58,17 @@ export default class Cards4Links extends Plugin {
       hotkeys: [{ modifiers: ["Mod", "Shift"], key: "e" }],
     });
 
+    this.addCommand({
+      id: "open-settings",
+      name: "Open plugin settings",
+      hotkeys: [{ modifiers: ["Mod", "Shift"], key: "," }],
+      callback: () => {
+        const setting = (this.app as any).setting;
+        setting.open();
+        setting.openTabById("cards-for-links");
+      },
+    });
+
     this.registerEvent(
       this.app.workspace.on("editor-paste", this.onPaste)
     );
@@ -67,7 +83,7 @@ export default class Cards4Links extends Plugin {
   private async enhanceSelected(editor: Editor): Promise<void> {
     const selected = (EditorExtensions.getSelectedText(editor) || "").trim();
 
-    const generator = new CardGenerator(editor, this.settings.defaultView);
+    const generator = this.makeGenerator(editor);
 
     for (const line of selected.split(/[\n ]/)) {
       if (isUrl(line)) {
@@ -93,7 +109,7 @@ export default class Cards4Links extends Plugin {
       return;
     }
 
-    const generator = new CardGenerator(editor, this.settings.defaultView);
+    const generator = this.makeGenerator(editor);
     await generator.convert(clipboardText);
   }
 
@@ -113,7 +129,7 @@ export default class Cards4Links extends Plugin {
     evt.stopPropagation();
     evt.preventDefault();
 
-    const generator = new CardGenerator(editor, this.settings.defaultView);
+    const generator = this.makeGenerator(editor);
     await generator.convert(clipboardText);
   };
 
@@ -193,6 +209,17 @@ export default class Cards4Links extends Plugin {
   private getEditor(): Editor | undefined {
     const view = this.app.workspace.getActiveViewOfType(MarkdownView);
     return view?.editor;
+  }
+
+  private makeGenerator(editor: Editor): CardGenerator {
+    return new CardGenerator(
+      editor,
+      this.settings.defaultView,
+      this.settings.cacheImages,
+      this.settings.cacheFolder,
+      this.settings.cacheLocation,
+      this.app
+    );
   }
 
   private async loadSettings() {

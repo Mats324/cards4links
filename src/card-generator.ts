@@ -1,10 +1,24 @@
-import { Editor, Notice, requestUrl } from "obsidian";
+import { App, Editor, Notice, TFile, requestUrl } from "obsidian";
 import { MetadataParser, LinkMetadata } from "./metadata-parser";
 import { EditorExtensions } from "./editor-extensions";
-import type { CardView } from "./settings";
+import type { CardView, CacheLocation } from "./settings";
+import {
+  hashUrl,
+  downloadImage,
+  getCacheFolderPath,
+  ensureFolder,
+  addToManifest,
+} from "./image-cache";
 
 export class CardGenerator {
-  constructor(private editor: Editor, private defaultView: CardView = "card") {}
+  constructor(
+    private editor: Editor,
+    private defaultView: CardView = "card",
+    private cacheImages = false,
+    private cacheFolder = "cards4links-cache",
+    private cacheLocation: CacheLocation = "vault-absolute",
+    private app?: App
+  ) {}
 
   async convert(url: string): Promise<void> {
     const selectedText = this.editor.getSelection();
@@ -15,6 +29,9 @@ export class CardGenerator {
     new Notice("Cards4Links: fetching metadata...");
 
     const metadata = await this.fetchMetadata(url);
+    if (metadata && this.cacheImages && metadata.image && this.app) {
+      await this.cacheImage(metadata);
+    }
     const text = this.editor.getValue();
     const start = text.indexOf(placeholder);
 
@@ -46,6 +63,7 @@ export class CardGenerator {
     if (md.host) lines.push(`host: ${md.host}`);
     if (md.favicon) lines.push(`favicon: ${md.favicon}`);
     if (md.image) lines.push(`image: ${md.image}`);
+    if (md.imageLocal) lines.push(`imageLocal: ${md.imageLocal}`);
     lines.push(`watched: false`);
     lines.push(`view: ${this.defaultView}`);
     lines.push("```\n");
@@ -68,6 +86,42 @@ export class CardGenerator {
     } catch (e) {
       console.log("Cards4Links fetch error:", e);
       return undefined;
+    }
+  }
+
+  private async cacheImage(metadata: LinkMetadata): Promise<void> {
+    try {
+      const activeFile = this.app!.workspace.getActiveFile();
+      const folder = getCacheFolderPath(
+        activeFile,
+        this.cacheLocation,
+        this.cacheFolder
+      );
+      await ensureFolder(this.app!, folder);
+
+      const filename = await hashUrl(metadata.image!);
+      const existing = this.app!.vault.getAbstractFileByPath(
+        `${folder}/${filename}`
+      );
+      if (!existing) {
+        const buffer = await downloadImage(metadata.image!);
+        await this.app!.vault.createBinary(`${folder}/${filename}`, buffer);
+      }
+
+      const file = this.app!.vault.getAbstractFileByPath(
+        `${folder}/${filename}`
+      );
+
+      await addToManifest(this.app!, folder, {
+        filename,
+        originalUrl: metadata.image!,
+        cachedAt: new Date().toISOString(),
+        size: file && file instanceof TFile ? file.stat.size : 0,
+      });
+
+      metadata.imageLocal = `${folder}/${filename}`;
+    } catch (e) {
+      console.log("Cards4Links: failed to cache image", e);
     }
   }
 
