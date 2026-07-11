@@ -29,8 +29,7 @@ Right-click in the editor → **"Paste URL and enhance to card link"**.
 - **Rich Metadata** — Auto-fetches Open Graph data (title, description, image)
 - **Multiple Views** — Choose between Card, Compact, and Minimal layouts
 - **Watched/Read Tracking** — Mark video cards as "Watched" and articles as "Read"
-- **Card Groups** — Combine multiple cards in a single block (separate with `---`)
-- **Carousel** — Turn card groups into a scrollable carousel with smooth navigation
+- **Carousel** — Combine multiple URLs into a scrollable card carousel (separate with `---` or select 2+ URLs)
 - **Responsive** — Looks great on desktop and mobile
 - **Card Theme** — Force light or dark card colors independently of Obsidian
 - **Image Caching** — Download images to vault for offline access (TTL configurable)
