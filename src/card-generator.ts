@@ -55,6 +55,69 @@ export class CardGenerator {
     this.editor.replaceRange(this.generateCodeBlock(metadata), startPos, endPos);
   }
 
+  async convertGroup(urls: string[]): Promise<void> {
+    if (urls.length < 2) {
+      new Notice("Cards4Links: select 2+ URLs to create a carousel");
+      return;
+    }
+
+    const selectedText = this.editor.getSelection();
+    const placeholderId = this.randomId();
+    const placeholder = `[Fetching Data#${placeholderId}](${urls.length} links)`;
+
+    this.editor.replaceSelection(placeholder);
+    new Notice(`Cards4Links: fetching metadata for ${urls.length} links...`);
+
+    const results = await Promise.allSettled(
+      urls.map((url) => this.fetchMetadata(url))
+    );
+
+    const metadataList: LinkMetadata[] = [];
+    for (const r of results) {
+      if (r.status === "fulfilled" && r.value) {
+        metadataList.push(r.value);
+      }
+    }
+
+    if (metadataList.length === 0) {
+      new Notice("Cards4Links: couldn't fetch any link metadata");
+      this.editor.replaceSelection(selectedText || urls.join("\n"));
+      return;
+    }
+
+    if (this.cacheImages && this.app) {
+      for (const md of metadataList) {
+        if (md.image) {
+          await this.cacheImage(md);
+        }
+      }
+    }
+
+    const text = this.editor.getValue();
+    const start = text.indexOf(placeholder);
+
+    if (start < 0) {
+      console.log(
+        `Cards4Links: could not find placeholder "${placeholder}" in editor`
+      );
+      return;
+    }
+
+    const end = start + placeholder.length;
+    const startPos = EditorExtensions.posFromIndex(text, start);
+    const endPos = EditorExtensions.posFromIndex(text, end);
+
+    this.editor.replaceRange(
+      this.generateGroupCodeBlock(metadataList),
+      startPos,
+      endPos
+    );
+
+    new Notice(
+      `Cards4Links: created carousel with ${metadataList.length} cards`
+    );
+  }
+
   private generateCodeBlock(md: LinkMetadata): string {
     const lines = ["\n```cardlink"];
     lines.push(`url: ${md.url}`);
@@ -68,6 +131,24 @@ export class CardGenerator {
     lines.push(`view: ${this.defaultView}`);
     lines.push("```\n");
     return lines.join("\n");
+  }
+
+  private generateGroupCodeBlock(mdList: LinkMetadata[]): string {
+    const sections = mdList.map((md) => {
+      const sLines = [];
+      sLines.push(`url: ${md.url}`);
+      sLines.push(`title: "${md.title}"`);
+      if (md.description) sLines.push(`description: "${md.description}"`);
+      if (md.host) sLines.push(`host: ${md.host}`);
+      if (md.favicon) sLines.push(`favicon: ${md.favicon}`);
+      if (md.image) sLines.push(`image: ${md.image}`);
+      if (md.imageLocal) sLines.push(`imageLocal: ${md.imageLocal}`);
+      sLines.push(`watched: false`);
+      sLines.push(`view: carousel`);
+      return sLines.join("\n");
+    });
+
+    return "\n```cardlink\n" + sections.join("\n---\n") + "\n```\n";
   }
 
   private async fetchMetadata(

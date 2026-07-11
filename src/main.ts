@@ -59,6 +59,18 @@ export default class Cards4Links extends Plugin {
     });
 
     this.addCommand({
+      id: "create-carousel",
+      name: "Create carousel from selected URLs",
+      editorCheckCallback: (checking: boolean, editor: Editor) => {
+        if (!navigator.onLine) return false;
+        if (checking) return true;
+        void this.createCarousel(editor);
+        return;
+      },
+      hotkeys: [{ modifiers: ["Mod", "Shift"], key: "c" }],
+    });
+
+    this.addCommand({
       id: "open-settings",
       name: "Open plugin settings",
       hotkeys: [{ modifiers: ["Mod", "Shift"], key: "," }],
@@ -84,15 +96,45 @@ export default class Cards4Links extends Plugin {
     const selected = (EditorExtensions.getSelectedText(editor) || "").trim();
 
     const generator = this.makeGenerator(editor);
+    const urls: string[] = [];
 
     for (const line of selected.split(/[\n ]/)) {
       if (isUrl(line)) {
-        await generator.convert(line);
+        urls.push(line);
       } else if (isLinkedUrl(line)) {
         const url = extractUrlFromLink(line);
-        if (url) await generator.convert(url);
+        if (url) urls.push(url);
       }
     }
+
+    if (urls.length === 0) return;
+    if (urls.length === 1) {
+      await generator.convert(urls[0]);
+    } else {
+      await generator.convertGroup(urls);
+    }
+  }
+
+  private async createCarousel(editor: Editor): Promise<void> {
+    const selected = (EditorExtensions.getSelectedText(editor) || "").trim();
+    const generator = this.makeGenerator(editor);
+    const urls: string[] = [];
+
+    for (const line of selected.split(/[\n ]/)) {
+      if (isUrl(line)) {
+        urls.push(line);
+      } else if (isLinkedUrl(line)) {
+        const url = extractUrlFromLink(line);
+        if (url) urls.push(url);
+      }
+    }
+
+    if (urls.length < 2) {
+      new Notice("Cards4Links: select 2+ URLs to create a carousel");
+      return;
+    }
+
+    await generator.convertGroup(urls);
   }
 
   private async manualPasteAndEnhance(editor: Editor): Promise<void> {
@@ -157,6 +199,17 @@ export default class Cards4Links extends Plugin {
           const editor = this.getEditor();
           if (!editor) return;
           void this.enhanceSelected(editor);
+        });
+    });
+
+    menu.addItem((item) => {
+      item
+        .setTitle("Create carousel from selected URLs")
+        .setIcon("gallery-horizontal-end")
+        .onClick(() => {
+          const editor = this.getEditor();
+          if (!editor) return;
+          void this.createCarousel(editor);
         });
     });
   };

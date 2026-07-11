@@ -30,6 +30,7 @@ Right-click in the editor → **"Paste URL and enhance to card link"**.
 - **Multiple Views** — Choose between Card, Compact, and Minimal layouts
 - **Watched/Read Tracking** — Mark video cards as "Watched" and articles as "Read"
 - **Card Groups** — Combine multiple cards in a single block (separate with `---`)
+- **Carousel** — Turn card groups into a scrollable carousel with smooth navigation
 - **Responsive** — Looks great on desktop and mobile
 - **Card Theme** — Force light or dark card colors independently of Obsidian
 - **Image Caching** — Download images to vault for offline access (TTL configurable)
@@ -40,6 +41,11 @@ Right-click in the editor → **"Paste URL and enhance to card link"**.
 - **Description Placeholder** — Click to add or edit the card description
 - **Custom Thumbnails** — Display on the right, left, or hide entirely
 - **Quick Settings** — `Ctrl+Shift+,` to open plugin settings directly
+
+### Carousel
+Select 2+ URLs and run **"Create carousel from selected URLs"** (`Ctrl+Shift+C`) to generate a scrollable card carousel.
+
+![Carousel](assets/Carousel.gif)
 
 
 ## Views for a single card

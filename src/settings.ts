@@ -3,7 +3,7 @@ import Cards4Links from "./main";
 import { CacheCleanupModal } from "./cache-cleanup-modal";
 
 export type ThumbnailPosition = "right" | "left" | "none";
-export type CardView = "card" | "compact" | "minimal";
+export type CardView = "card" | "compact" | "minimal" | "carousel";
 export type CardTheme = "default" | "light" | "dark";
 export type CacheLocation = "vault-absolute" | "note-relative";
 
@@ -12,7 +12,7 @@ export function isThumbnailPosition(v: string): v is ThumbnailPosition {
 }
 
 export function isCardView(v: string): v is CardView {
-  return v === "card" || v === "compact" || v === "minimal";
+  return v === "card" || v === "compact" || v === "minimal" || v === "carousel";
 }
 
 export function isCardTheme(v: string): v is CardTheme {

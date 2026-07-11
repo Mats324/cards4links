@@ -78,15 +78,81 @@ export class CardProcessor {
         el.appendChild(this.renderError(error as Error));
       }
     } else {
-      const group = el.createDiv({ cls: "cards4links-group" });
+      const carousel = el.createDiv({
+        cls: "cards4links-carousel",
+        attr: {
+          role: "region",
+          "aria-label": "Card carousel",
+          "aria-roledescription": "carousel",
+        },
+      });
+
+      const viewport = carousel.createDiv({
+        cls: "cards4links-carousel-viewport",
+        attr: { "aria-live": "off" },
+      });
+
+      const track = viewport.createDiv({ cls: "cards4links-carousel-track" });
+
       for (let i = 0; i < this.sections.length; i++) {
+        const slide = track.createDiv({
+          cls: "cards4links-carousel-slide",
+          attr: {
+            role: "group",
+            "aria-roledescription": "slide",
+            "aria-label": `Slide ${i + 1} of ${this.sections.length}`,
+          },
+        });
         try {
           const data = this.parseYaml(this.sections[i]);
-          this.renderCard(group, data, this.sections[i], i, true);
+          this.renderCard(slide, data, this.sections[i], i, true);
         } catch (error) {
-          group.appendChild(this.renderError(error as Error));
+          slide.appendChild(this.renderError(error as Error));
         }
       }
+
+      const dotsContainer = carousel.createDiv({
+        cls: "cards4links-carousel-dots",
+        attr: { role: "tablist", "aria-label": "Slide navigation" },
+      });
+
+      for (let i = 0; i < this.sections.length; i++) {
+        const dot = dotsContainer.createEl("button", {
+          cls: "cards4links-carousel-dot",
+          attr: {
+            role: "tab",
+            "aria-selected": i === 0 ? "true" : "false",
+            "aria-label": `Go to slide ${i + 1}`,
+            "data-index": String(i),
+          },
+        });
+        if (i === 0) dot.classList.add("cards4links-carousel-dot-active");
+      }
+
+      const prevBtn = carousel.createEl("button", {
+        cls: "cards4links-carousel-prev",
+        attr: {
+          "aria-label": "Previous slide",
+          disabled: "",
+        },
+      });
+      prevBtn.appendChild(
+        createSvgIcon("0 0 24 24", 18,
+          ["path", { d: "M15 18l-6-6 6-6", fill: "none", stroke: "currentColor", "stroke-width": "2", "stroke-linecap": "round", "stroke-linejoin": "round" }]
+        )
+      );
+
+      const nextBtn = carousel.createEl("button", {
+        cls: "cards4links-carousel-next",
+        attr: { "aria-label": "Next slide" },
+      });
+      nextBtn.appendChild(
+        createSvgIcon("0 0 24 24", 18,
+          ["path", { d: "M9 6l6 6-6 6", fill: "none", stroke: "currentColor", "stroke-width": "2", "stroke-linecap": "round", "stroke-linejoin": "round" }]
+        )
+      );
+
+      this.setupCarouselNav(viewport, dotsContainer, prevBtn, nextBtn);
     }
   }
 
@@ -139,7 +205,7 @@ export class CardProcessor {
     cardIndex: number,
     isGroup: boolean
   ): void {
-    const view = isGroup ? "card" : (data.view || "card");
+    const view = isGroup ? "carousel" : (data.view || "card");
     const needsUpgrade = !/^view:/m.test(sectionSource);
 
     // Actions bar
@@ -161,10 +227,10 @@ export class CardProcessor {
       );
       upgradeBtn.addEventListener("click", (e) => {
         e.stopPropagation();
-        container.dataset.view = isGroup ? "card" : this.defaultView;
+        container.dataset.view = isGroup ? "carousel" : this.defaultView;
         const oldSource = this.source;
         const newSections = [...this.sections];
-        newSections[cardIndex] = newSections[cardIndex] + `\nview: ${isGroup ? "card" : this.defaultView}`;
+        newSections[cardIndex] = newSections[cardIndex] + `\nview: ${isGroup ? "carousel" : this.defaultView}`;
         const newSource = newSections.join("\n---\n");
         this.replaceBlock(oldSource, newSource);
         this.sections = newSections;
@@ -513,6 +579,87 @@ export class CardProcessor {
     const container = createDiv({ cls: "cards4links-error" });
     container.setText(`cardlink error: ${error.message}`);
     return container;
+  }
+
+  private setupCarouselNav(
+    viewport: HTMLElement,
+    dotsContainer: HTMLElement,
+    prevBtn: HTMLElement,
+    nextBtn: HTMLElement
+  ): void {
+    const slides = Array.from(viewport.querySelectorAll<HTMLElement>(".cards4links-carousel-slide"));
+    const dots = Array.from(dotsContainer.querySelectorAll<HTMLElement>(".cards4links-carousel-dot"));
+    if (slides.length === 0) return;
+
+    const getSlideWidth = (): number => {
+      const slide = slides[0];
+      if (!slide) return 0;
+      const style = getComputedStyle(viewport.parentElement!);
+      const gap = parseFloat(style.getPropertyValue("gap")) || 16;
+      return slide.offsetWidth + gap;
+    };
+
+    const updateNav = (): void => {
+      const scrollLeft = viewport.scrollLeft;
+      const maxScroll = viewport.scrollWidth - viewport.clientWidth;
+      const atStart = scrollLeft <= 1;
+      const atEnd = scrollLeft >= maxScroll - 1;
+
+      prevBtn.toggleAttribute("disabled", atStart);
+      nextBtn.toggleAttribute("disabled", atEnd);
+
+      let closestIdx = 0;
+      let closestDist = Infinity;
+      slides.forEach((slide, i) => {
+        const dist = Math.abs(slide.offsetLeft - scrollLeft);
+        if (dist < closestDist) {
+          closestDist = dist;
+          closestIdx = i;
+        }
+      });
+
+      dots.forEach((dot, i) => {
+        const isActive = i === closestIdx;
+        dot.classList.toggle("cards4links-carousel-dot-active", isActive);
+        dot.setAttribute("aria-selected", isActive ? "true" : "false");
+      });
+    };
+
+    let scrollTimer = 0;
+    viewport.addEventListener("scroll", () => {
+      window.clearTimeout(scrollTimer);
+      scrollTimer = window.setTimeout(updateNav, 60);
+    });
+
+    prevBtn.addEventListener("click", () => {
+      void viewport.scrollBy({ left: -getSlideWidth(), behavior: "smooth" });
+    });
+
+    nextBtn.addEventListener("click", () => {
+      void viewport.scrollBy({ left: getSlideWidth(), behavior: "smooth" });
+    });
+
+    dotsContainer.addEventListener("click", (e) => {
+      const dot = (e.target as HTMLElement).closest<HTMLElement>(".cards4links-carousel-dot");
+      if (!dot) return;
+      const idx = parseInt(dot.dataset.index ?? "0", 10);
+      const target = slides[idx];
+      if (target) {
+        viewport.scrollTo({ left: target.offsetLeft, behavior: "smooth" });
+      }
+    });
+
+    viewport.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        void viewport.scrollBy({ left: -getSlideWidth(), behavior: "smooth" });
+      } else if (e.key === "ArrowRight") {
+        e.preventDefault();
+        void viewport.scrollBy({ left: getSlideWidth(), behavior: "smooth" });
+      }
+    });
+
+    requestAnimationFrame(() => updateNav());
   }
 }
 

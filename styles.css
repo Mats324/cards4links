@@ -150,6 +150,11 @@
   right: var(--size-2-2);
   bottom: var(--size-2-2);
   z-index: 1;
+  padding: var(--size-2-1);
+  border-radius: var(--radius-s);
+  background: color-mix(in srgb, var(--background-primary) 80%, transparent);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
 .obsidian-app:not(.is-mobile)
@@ -195,17 +200,23 @@
   top: var(--size-2-2);
   right: 32px;
   z-index: 2;
-  background: var(--background-primary);
-  border: 1px solid var(--background-modifier-border);
-  border-radius: var(--radius-s);
   padding: var(--size-2-1);
+  border-radius: var(--radius-l);
+  background: color-mix(in srgb, var(--background-primary) 80%, transparent);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
 }
 
 .obsidian-app:not(.is-mobile)
   .cards4links-actions-bar-float,
 .obsidian-app:not(.is-mobile)
   .cards4links-card-wrapper .cards4links-actions-bar {
-  display: none;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(4px);
+  pointer-events: none;
+  transition: opacity 180ms ease, transform 180ms ease, visibility 180ms;
 }
 
 .obsidian-app:not(.is-mobile)
@@ -214,7 +225,10 @@
 .obsidian-app:not(.is-mobile)
   .block-language-cardlink:hover
   .cards4links-card-wrapper .cards4links-actions-bar {
-  display: flex;
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+  pointer-events: auto;
 }
 
 .is-mobile .cards4links-actions-bar {
@@ -227,6 +241,10 @@
   gap: var(--size-2-1);
 }
 
+.cards4links-carousel-slide .cards4links-card-wrapper {
+  height: 100%;
+}
+
 .cards4links-card-wrapper .cards4links-actions-bar {
   justify-content: flex-end;
   padding: 0 var(--size-2-2);
@@ -234,11 +252,13 @@
 
 .cards4links-actions-bar .clickable-icon {
   color: var(--text-muted);
-  transition: color 150ms ease;
+  border-radius: var(--radius-s);
+  transition: background-color 150ms ease, color 150ms ease;
 }
 
 .cards4links-actions-bar .clickable-icon:hover {
   color: var(--interactive-accent);
+  background-color: var(--background-modifier-hover);
 }
 
 .is-mobile .cards4links-actions-bar .clickable-icon {
@@ -300,6 +320,188 @@
   display: flex;
   flex-direction: column;
   gap: var(--size-4-2);
+}
+
+/* ── Carousel ────────────────────────────────────────────────────────────── */
+
+/* Outer wrapper */
+.cards4links-carousel {
+  position: relative;
+  width: 100%;
+}
+
+/* Scroll viewport */
+.cards4links-carousel-viewport {
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  overscroll-behavior-x: contain;
+  scroll-behavior: smooth;
+}
+
+.cards4links-carousel-viewport::-webkit-scrollbar {
+  display: none;
+}
+
+/* Horizontal track */
+.cards4links-carousel-track {
+  display: flex;
+  gap: var(--size-4-2);
+}
+
+/* Individual slide wrapper */
+.cards4links-carousel-slide {
+  flex: 0 0 calc(50% - var(--size-4-2) / 2);
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+  min-width: 0;
+  height: 20em;
+}
+
+/* Carousel arrows */
+.cards4links-carousel-prev,
+.cards4links-carousel-next {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-70%);
+  z-index: 3;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-m);
+  background: var(--background-primary);
+  color: var(--text-normal);
+  cursor: pointer;
+  opacity: 0.85;
+  transition: opacity 150ms ease, background 150ms ease, color 150ms ease;
+  backdrop-filter: blur(4px);
+}
+
+.cards4links-carousel-prev:hover,
+.cards4links-carousel-next:hover {
+  opacity: 1;
+  background: var(--background-primary-alt);
+  color: var(--interactive-accent);
+  border-color: var(--interactive-accent);
+}
+
+.cards4links-carousel-prev {
+  left: var(--size-2-2);
+}
+
+.cards4links-carousel-next {
+  right: var(--size-2-2);
+}
+
+.cards4links-carousel-prev:disabled,
+.cards4links-carousel-next:disabled {
+  display: none;
+}
+
+/* Dot indicators */
+.cards4links-carousel-dots {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: var(--size-2-1);
+  margin-top: var(--size-4-1);
+  padding: var(--size-2-1) 0;
+}
+
+.cards4links-carousel-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 1.5px solid var(--text-muted);
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  transition: background 150ms ease, border-color 150ms ease, transform 150ms ease;
+}
+
+.cards4links-carousel-dot:hover {
+  border-color: var(--interactive-accent);
+}
+
+.cards4links-carousel-dot-active {
+  background: var(--interactive-accent);
+  border-color: var(--interactive-accent);
+  transform: scale(1.25);
+}
+
+/* ── Card featured (carousel view) ───────────────────────────────────────── */
+
+.cards4links-container[data-view="carousel"] .cards4links-card {
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+}
+
+.cards4links-container[data-view="carousel"] .cards4links-thumbnail {
+  width: 100% !important;
+  max-width: none !important;
+  height: auto !important;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: var(--radius-s) var(--radius-s) 0 0 !important;
+  border-bottom: none;
+}
+
+.cards4links-container[data-view="carousel"] .cards4links-img-placeholder {
+  width: 100% !important;
+  max-width: none !important;
+  aspect-ratio: 16 / 9;
+  border-radius: var(--radius-s) var(--radius-s) 0 0 !important;
+}
+
+.cards4links-container[data-view="carousel"] .cards4links-main {
+  padding: var(--size-4-2) var(--size-4-3);
+  gap: var(--size-2-1);
+  flex: 1;
+}
+
+.cards4links-container[data-view="carousel"] .cards4links-description {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.cards4links-container[data-view="carousel"] .cards4links-host {
+  display: none;
+}
+
+.cards4links-container[data-view="carousel"] .cards4links-title-text {
+  white-space: nowrap !important;
+}
+
+/* Carousel responsive — container: full-width slides, hide arrows */
+@container (max-width: 500px) {
+  .cards4links-carousel-slide {
+    flex: 0 0 100%;
+    height: auto;
+  }
+
+  .cards4links-carousel-prev,
+  .cards4links-carousel-next {
+    display: none;
+  }
+
+  .cards4links-container[data-view="carousel"] .cards4links-title-text {
+    white-space: normal !important;
+  }
+}
+
+/* Carousel arrows focus visible */
+.cards4links-carousel-prev:focus-visible,
+.cards4links-carousel-next:focus-visible,
+.cards4links-carousel-dot:focus-visible {
+  outline: 2px solid var(--interactive-accent);
+  outline-offset: 2px;
 }
 
 /* Reduced motion */
@@ -477,6 +679,10 @@
   }
   .cards4links-title-text {
     white-space: normal !important;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
   }
 }
 

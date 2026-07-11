@@ -330,7 +330,7 @@ function isThumbnailPosition(v) {
   return v === "right" || v === "left" || v === "none";
 }
 function isCardView(v) {
-  return v === "card" || v === "compact" || v === "minimal";
+  return v === "card" || v === "compact" || v === "minimal" || v === "carousel";
 }
 function isCardTheme(v) {
   return v === "default" || v === "light" || v === "dark";
@@ -638,6 +638,59 @@ var CardGenerator = class {
       this.editor.replaceRange(this.generateCodeBlock(metadata), startPos, endPos);
     });
   }
+  convertGroup(urls) {
+    return __async(this, null, function* () {
+      if (urls.length < 2) {
+        new import_obsidian4.Notice("Cards4Links: select 2+ URLs to create a carousel");
+        return;
+      }
+      const selectedText = this.editor.getSelection();
+      const placeholderId = this.randomId();
+      const placeholder = `[Fetching Data#${placeholderId}](${urls.length} links)`;
+      this.editor.replaceSelection(placeholder);
+      new import_obsidian4.Notice(`Cards4Links: fetching metadata for ${urls.length} links...`);
+      const results = yield Promise.allSettled(
+        urls.map((url) => this.fetchMetadata(url))
+      );
+      const metadataList = [];
+      for (const r of results) {
+        if (r.status === "fulfilled" && r.value) {
+          metadataList.push(r.value);
+        }
+      }
+      if (metadataList.length === 0) {
+        new import_obsidian4.Notice("Cards4Links: couldn't fetch any link metadata");
+        this.editor.replaceSelection(selectedText || urls.join("\n"));
+        return;
+      }
+      if (this.cacheImages && this.app) {
+        for (const md of metadataList) {
+          if (md.image) {
+            yield this.cacheImage(md);
+          }
+        }
+      }
+      const text = this.editor.getValue();
+      const start = text.indexOf(placeholder);
+      if (start < 0) {
+        console.log(
+          `Cards4Links: could not find placeholder "${placeholder}" in editor`
+        );
+        return;
+      }
+      const end = start + placeholder.length;
+      const startPos = EditorExtensions.posFromIndex(text, start);
+      const endPos = EditorExtensions.posFromIndex(text, end);
+      this.editor.replaceRange(
+        this.generateGroupCodeBlock(metadataList),
+        startPos,
+        endPos
+      );
+      new import_obsidian4.Notice(
+        `Cards4Links: created carousel with ${metadataList.length} cards`
+      );
+    });
+  }
   generateCodeBlock(md) {
     const lines = ["\n```cardlink"];
     lines.push(`url: ${md.url}`);
@@ -651,6 +704,22 @@ var CardGenerator = class {
     lines.push(`view: ${this.defaultView}`);
     lines.push("```\n");
     return lines.join("\n");
+  }
+  generateGroupCodeBlock(mdList) {
+    const sections = mdList.map((md) => {
+      const sLines = [];
+      sLines.push(`url: ${md.url}`);
+      sLines.push(`title: "${md.title}"`);
+      if (md.description) sLines.push(`description: "${md.description}"`);
+      if (md.host) sLines.push(`host: ${md.host}`);
+      if (md.favicon) sLines.push(`favicon: ${md.favicon}`);
+      if (md.image) sLines.push(`image: ${md.image}`);
+      if (md.imageLocal) sLines.push(`imageLocal: ${md.imageLocal}`);
+      sLines.push(`watched: false`);
+      sLines.push(`view: carousel`);
+      return sLines.join("\n");
+    });
+    return "\n```cardlink\n" + sections.join("\n---\n") + "\n```\n";
   }
   fetchMetadata(url) {
     return __async(this, null, function* () {
@@ -777,15 +846,77 @@ var CardProcessor = class {
         el.appendChild(this.renderError(error));
       }
     } else {
-      const group = el.createDiv({ cls: "cards4links-group" });
+      const carousel = el.createDiv({
+        cls: "cards4links-carousel",
+        attr: {
+          role: "region",
+          "aria-label": "Card carousel",
+          "aria-roledescription": "carousel"
+        }
+      });
+      const viewport = carousel.createDiv({
+        cls: "cards4links-carousel-viewport",
+        attr: { "aria-live": "off" }
+      });
+      const track = viewport.createDiv({ cls: "cards4links-carousel-track" });
       for (let i = 0; i < this.sections.length; i++) {
+        const slide = track.createDiv({
+          cls: "cards4links-carousel-slide",
+          attr: {
+            role: "group",
+            "aria-roledescription": "slide",
+            "aria-label": `Slide ${i + 1} of ${this.sections.length}`
+          }
+        });
         try {
           const data = this.parseYaml(this.sections[i]);
-          this.renderCard(group, data, this.sections[i], i, true);
+          this.renderCard(slide, data, this.sections[i], i, true);
         } catch (error) {
-          group.appendChild(this.renderError(error));
+          slide.appendChild(this.renderError(error));
         }
       }
+      const dotsContainer = carousel.createDiv({
+        cls: "cards4links-carousel-dots",
+        attr: { role: "tablist", "aria-label": "Slide navigation" }
+      });
+      for (let i = 0; i < this.sections.length; i++) {
+        const dot = dotsContainer.createEl("button", {
+          cls: "cards4links-carousel-dot",
+          attr: {
+            role: "tab",
+            "aria-selected": i === 0 ? "true" : "false",
+            "aria-label": `Go to slide ${i + 1}`,
+            "data-index": String(i)
+          }
+        });
+        if (i === 0) dot.classList.add("cards4links-carousel-dot-active");
+      }
+      const prevBtn = carousel.createEl("button", {
+        cls: "cards4links-carousel-prev",
+        attr: {
+          "aria-label": "Previous slide",
+          disabled: ""
+        }
+      });
+      prevBtn.appendChild(
+        createSvgIcon(
+          "0 0 24 24",
+          18,
+          ["path", { d: "M15 18l-6-6 6-6", fill: "none", stroke: "currentColor", "stroke-width": "2", "stroke-linecap": "round", "stroke-linejoin": "round" }]
+        )
+      );
+      const nextBtn = carousel.createEl("button", {
+        cls: "cards4links-carousel-next",
+        attr: { "aria-label": "Next slide" }
+      });
+      nextBtn.appendChild(
+        createSvgIcon(
+          "0 0 24 24",
+          18,
+          ["path", { d: "M9 6l6 6-6 6", fill: "none", stroke: "currentColor", "stroke-width": "2", "stroke-linecap": "round", "stroke-linejoin": "round" }]
+        )
+      );
+      this.setupCarouselNav(viewport, dotsContainer, prevBtn, nextBtn);
     }
   }
   parseYaml(source) {
@@ -824,7 +955,7 @@ var CardProcessor = class {
     };
   }
   renderCard(parentEl, data, sectionSource, cardIndex, isGroup) {
-    const view = isGroup ? "card" : data.view || "card";
+    const view = isGroup ? "carousel" : data.view || "card";
     const needsUpgrade = !/^view:/m.test(sectionSource);
     const actionsBar = createDiv({ cls: "cards4links-actions-bar" });
     if (!isGroup) {
@@ -845,11 +976,11 @@ var CardProcessor = class {
       );
       upgradeBtn.addEventListener("click", (e) => {
         e.stopPropagation();
-        container.dataset.view = isGroup ? "card" : this.defaultView;
+        container.dataset.view = isGroup ? "carousel" : this.defaultView;
         const oldSource = this.source;
         const newSections = [...this.sections];
         newSections[cardIndex] = newSections[cardIndex] + `
-view: ${isGroup ? "card" : this.defaultView}`;
+view: ${isGroup ? "carousel" : this.defaultView}`;
         const newSource = newSections.join("\n---\n");
         this.replaceBlock(oldSource, newSource);
         this.sections = newSections;
@@ -1161,6 +1292,71 @@ ${finalContent}
     container.setText(`cardlink error: ${error.message}`);
     return container;
   }
+  setupCarouselNav(viewport, dotsContainer, prevBtn, nextBtn) {
+    const slides = Array.from(viewport.querySelectorAll(".cards4links-carousel-slide"));
+    const dots = Array.from(dotsContainer.querySelectorAll(".cards4links-carousel-dot"));
+    if (slides.length === 0) return;
+    const getSlideWidth = () => {
+      const slide = slides[0];
+      if (!slide) return 0;
+      const style = getComputedStyle(viewport.parentElement);
+      const gap = parseFloat(style.getPropertyValue("gap")) || 16;
+      return slide.offsetWidth + gap;
+    };
+    const updateNav = () => {
+      const scrollLeft = viewport.scrollLeft;
+      const maxScroll = viewport.scrollWidth - viewport.clientWidth;
+      const atStart = scrollLeft <= 1;
+      const atEnd = scrollLeft >= maxScroll - 1;
+      prevBtn.toggleAttribute("disabled", atStart);
+      nextBtn.toggleAttribute("disabled", atEnd);
+      let closestIdx = 0;
+      let closestDist = Infinity;
+      slides.forEach((slide, i) => {
+        const dist = Math.abs(slide.offsetLeft - scrollLeft);
+        if (dist < closestDist) {
+          closestDist = dist;
+          closestIdx = i;
+        }
+      });
+      dots.forEach((dot, i) => {
+        const isActive = i === closestIdx;
+        dot.classList.toggle("cards4links-carousel-dot-active", isActive);
+        dot.setAttribute("aria-selected", isActive ? "true" : "false");
+      });
+    };
+    let scrollTimer = 0;
+    viewport.addEventListener("scroll", () => {
+      window.clearTimeout(scrollTimer);
+      scrollTimer = window.setTimeout(updateNav, 60);
+    });
+    prevBtn.addEventListener("click", () => {
+      void viewport.scrollBy({ left: -getSlideWidth(), behavior: "smooth" });
+    });
+    nextBtn.addEventListener("click", () => {
+      void viewport.scrollBy({ left: getSlideWidth(), behavior: "smooth" });
+    });
+    dotsContainer.addEventListener("click", (e) => {
+      var _a;
+      const dot = e.target.closest(".cards4links-carousel-dot");
+      if (!dot) return;
+      const idx = parseInt((_a = dot.dataset.index) != null ? _a : "0", 10);
+      const target = slides[idx];
+      if (target) {
+        viewport.scrollTo({ left: target.offsetLeft, behavior: "smooth" });
+      }
+    });
+    viewport.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        void viewport.scrollBy({ left: -getSlideWidth(), behavior: "smooth" });
+      } else if (e.key === "ArrowRight") {
+        e.preventDefault();
+        void viewport.scrollBy({ left: getSlideWidth(), behavior: "smooth" });
+      }
+    });
+    requestAnimationFrame(() => updateNav());
+  }
 };
 var ImagePickerModal = class extends import_obsidian5.Modal {
   constructor(app, currentUrl, onSubmit) {
@@ -1294,6 +1490,13 @@ var Cards4Links = class extends import_obsidian6.Plugin {
           void this.enhanceSelected(editor);
         });
       });
+      menu.addItem((item) => {
+        item.setTitle("Create carousel from selected URLs").setIcon("gallery-horizontal-end").onClick(() => {
+          const editor = this.getEditor();
+          if (!editor) return;
+          void this.createCarousel(editor);
+        });
+      });
     };
   }
   onload() {
@@ -1339,6 +1542,17 @@ var Cards4Links = class extends import_obsidian6.Plugin {
         hotkeys: [{ modifiers: ["Mod", "Shift"], key: "e" }]
       });
       this.addCommand({
+        id: "create-carousel",
+        name: "Create carousel from selected URLs",
+        editorCheckCallback: (checking, editor) => {
+          if (!navigator.onLine) return false;
+          if (checking) return true;
+          void this.createCarousel(editor);
+          return;
+        },
+        hotkeys: [{ modifiers: ["Mod", "Shift"], key: "c" }]
+      });
+      this.addCommand({
         id: "open-settings",
         name: "Open plugin settings",
         hotkeys: [{ modifiers: ["Mod", "Shift"], key: "," }],
@@ -1361,14 +1575,41 @@ var Cards4Links = class extends import_obsidian6.Plugin {
     return __async(this, null, function* () {
       const selected = (EditorExtensions.getSelectedText(editor) || "").trim();
       const generator = this.makeGenerator(editor);
+      const urls = [];
       for (const line of selected.split(/[\n ]/)) {
         if (isUrl(line)) {
-          yield generator.convert(line);
+          urls.push(line);
         } else if (isLinkedUrl(line)) {
           const url = extractUrlFromLink(line);
-          if (url) yield generator.convert(url);
+          if (url) urls.push(url);
         }
       }
+      if (urls.length === 0) return;
+      if (urls.length === 1) {
+        yield generator.convert(urls[0]);
+      } else {
+        yield generator.convertGroup(urls);
+      }
+    });
+  }
+  createCarousel(editor) {
+    return __async(this, null, function* () {
+      const selected = (EditorExtensions.getSelectedText(editor) || "").trim();
+      const generator = this.makeGenerator(editor);
+      const urls = [];
+      for (const line of selected.split(/[\n ]/)) {
+        if (isUrl(line)) {
+          urls.push(line);
+        } else if (isLinkedUrl(line)) {
+          const url = extractUrlFromLink(line);
+          if (url) urls.push(url);
+        }
+      }
+      if (urls.length < 2) {
+        new import_obsidian6.Notice("Cards4Links: select 2+ URLs to create a carousel");
+        return;
+      }
+      yield generator.convertGroup(urls);
     });
   }
   manualPasteAndEnhance(editor) {

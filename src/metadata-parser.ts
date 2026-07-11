@@ -9,7 +9,7 @@ export interface LinkMetadata {
   image?: string;
   imageLocal?: string;
   watched?: boolean;
-  view?: "card" | "compact" | "minimal";
+  view?: "card" | "compact" | "minimal" | "carousel";
   contentType?: ContentType;
 }
 
