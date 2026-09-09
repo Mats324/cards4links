@@ -1,6 +1,7 @@
 import { App, PluginSettingTab, Setting } from "obsidian";
 import Cards4Links from "./main";
 import { CacheCleanupModal } from "./cache-cleanup-modal";
+import { LanguageSetting, t } from "./i18n";
 
 export type ThumbnailPosition = "right" | "left" | "none";
 export type CardView = "card" | "compact" | "minimal" | "carousel";
@@ -24,6 +25,7 @@ export function isCacheLocation(v: string): v is CacheLocation {
 }
 
 export interface Cards4LinksSettings {
+  language: LanguageSetting;
   enhanceDefaultPaste: boolean;
   thumbnailPosition: ThumbnailPosition;
   showInMenuItem: boolean;
@@ -40,6 +42,7 @@ export interface Cards4LinksSettings {
 }
 
 export const DEFAULT_SETTINGS: Cards4LinksSettings = {
+  language: "auto",
   enhanceDefaultPaste: false,
   thumbnailPosition: "right",
   showInMenuItem: true,
@@ -67,20 +70,37 @@ export class Cards4LinksSettingTab extends PluginSettingTab {
     const { containerEl } = this;
     containerEl.empty();
 
+    new Setting(containerEl)
+      .setName(t("settings.language"))
+      .setDesc(t("settings.languageDesc"))
+      .addDropdown((dropdown) =>
+        dropdown
+          .addOption("auto", t("settings.language.auto"))
+          .addOption("en", t("settings.language.en"))
+          .addOption("it", t("settings.language.it"))
+          .setValue(this.plugin.settings.language)
+          .onChange(async (value) => {
+            if (value !== "auto" && value !== "en" && value !== "it") return;
+            this.plugin.setLanguage(value);
+            await this.plugin.saveSettings();
+            this.display();
+          })
+      );
+
     const counterSetting = new Setting(containerEl)
-      .setName("Cards created")
+      .setName(t("settings.cardsCreated"))
       .setDesc(
-        `Number of cards generated with Cards4Links since the last reset: ${this.plugin.settings.cardsCreated}`
+        t("settings.cardsCreatedDesc", {
+          count: this.plugin.settings.cardsCreated,
+        })
       );
 
     counterSetting.addButton((btn) =>
       btn
-        .setButtonText("Reset counter")
+        .setButtonText(t("settings.resetCounter"))
         .setWarning()
         .onClick(async () => {
-          const confirmed = window.confirm(
-            "Reset the card counter? This will also restart the milestone notifications."
-          );
+          const confirmed = window.confirm(t("settings.resetCounterConfirm"));
           if (!confirmed) return;
           this.plugin.settings.cardsCreated = 0;
           this.plugin.settings.milestonesShown = [];
@@ -90,10 +110,8 @@ export class Cards4LinksSettingTab extends PluginSettingTab {
     );
 
     new Setting(containerEl)
-      .setName("Enhance default paste")
-      .setDesc(
-        "Automatically fetch metadata when pasting a URL with the default paste command"
-      )
+      .setName(t("settings.enhancePaste"))
+      .setDesc(t("settings.enhancePasteDesc"))
       .addToggle((toggle) =>
         toggle
           .setValue(this.plugin.settings.enhanceDefaultPaste)
@@ -104,13 +122,13 @@ export class Cards4LinksSettingTab extends PluginSettingTab {
       );
 
     new Setting(containerEl)
-      .setName("Thumbnail position")
-      .setDesc("Where to show the thumbnail image in the card")
+      .setName(t("settings.thumbnailPosition"))
+      .setDesc(t("settings.thumbnailPositionDesc"))
       .addDropdown((dropdown) =>
         dropdown
-          .addOption("right", "Right")
-          .addOption("left", "Left")
-          .addOption("none", "No thumbnail")
+          .addOption("right", t("settings.thumbnail.right"))
+          .addOption("left", t("settings.thumbnail.left"))
+          .addOption("none", t("settings.thumbnail.none"))
           .setValue(this.plugin.settings.thumbnailPosition)
           .onChange(async (value) => {
             if (!isThumbnailPosition(value)) return;
@@ -120,8 +138,8 @@ export class Cards4LinksSettingTab extends PluginSettingTab {
       );
 
     new Setting(containerEl)
-      .setName("Show commands in menu item")
-      .setDesc("Add paste/enhance commands to the right-click context menu")
+      .setName(t("settings.showInMenu"))
+      .setDesc(t("settings.showInMenuDesc"))
       .addToggle((toggle) =>
         toggle
           .setValue(this.plugin.settings.showInMenuItem)
@@ -132,10 +150,8 @@ export class Cards4LinksSettingTab extends PluginSettingTab {
       );
 
     new Setting(containerEl)
-      .setName("Enable watched/read checkbox")
-      .setDesc(
-        "Show a checkbox on cards to track watched (video) or read (article) status"
-      )
+      .setName(t("settings.enableWatched"))
+      .setDesc(t("settings.enableWatchedDesc"))
       .addToggle((toggle) =>
         toggle
           .setValue(this.plugin.settings.enableWatched)
@@ -146,13 +162,13 @@ export class Cards4LinksSettingTab extends PluginSettingTab {
       );
 
     new Setting(containerEl)
-      .setName("Default card view")
-      .setDesc("Default view style for newly created cards")
+      .setName(t("settings.defaultView"))
+      .setDesc(t("settings.defaultViewDesc"))
       .addDropdown((dropdown) =>
         dropdown
-          .addOption("card", "Card")
-          .addOption("compact", "Compact")
-          .addOption("minimal", "Minimal")
+          .addOption("card", t("settings.view.card"))
+          .addOption("compact", t("settings.view.compact"))
+          .addOption("minimal", t("settings.view.minimal"))
           .setValue(this.plugin.settings.defaultView)
           .onChange(async (value) => {
             if (!isCardView(value)) return;
@@ -162,13 +178,13 @@ export class Cards4LinksSettingTab extends PluginSettingTab {
       );
 
     new Setting(containerEl)
-      .setName("Card theme")
-      .setDesc("Override card colors (default follows Obsidian theme)")
+      .setName(t("settings.theme"))
+      .setDesc(t("settings.themeDesc"))
       .addDropdown((dropdown) =>
         dropdown
-          .addOption("default", "Default")
-          .addOption("light", "Light")
-          .addOption("dark", "Dark")
+          .addOption("default", t("settings.theme.default"))
+          .addOption("light", t("settings.theme.light"))
+          .addOption("dark", t("settings.theme.dark"))
           .setValue(this.plugin.settings.theme)
           .onChange(async (value) => {
             if (!isCardTheme(value)) return;
@@ -178,8 +194,8 @@ export class Cards4LinksSettingTab extends PluginSettingTab {
       );
 
     new Setting(containerEl)
-      .setName("Cache images locally")
-      .setDesc("Download card images to the vault for offline access")
+      .setName(t("settings.cacheImages"))
+      .setDesc(t("settings.cacheImagesDesc"))
       .addToggle((toggle) =>
         toggle
           .setValue(this.plugin.settings.cacheImages)
@@ -192,15 +208,16 @@ export class Cards4LinksSettingTab extends PluginSettingTab {
 
     if (this.plugin.settings.cacheImages) {
       new Setting(containerEl)
-        .setName("Cache storage")
-        .setDesc("Store images in a global vault folder or next to each note")
+        .setName(t("settings.cacheStorage"))
+        .setDesc(t("settings.cacheStorageDesc"))
         .addDropdown((dropdown) =>
           dropdown
-            .addOption("vault-absolute", "Global folder")
-            .addOption("note-relative", "Per note")
+            .addOption("vault-absolute", t("settings.cacheLocation.vault"))
+            .addOption("note-relative", t("settings.cacheLocation.note"))
             .setValue(this.plugin.settings.cacheLocation)
             .onChange(async (value) => {
-              if (value !== "vault-absolute" && value !== "note-relative") return;
+              if (value !== "vault-absolute" && value !== "note-relative")
+                return;
               this.plugin.settings.cacheLocation = value;
               await this.plugin.saveSettings();
               this.display();
@@ -209,28 +226,29 @@ export class Cards4LinksSettingTab extends PluginSettingTab {
 
       if (this.plugin.settings.cacheLocation === "vault-absolute") {
         new Setting(containerEl)
-          .setName("Cache folder name")
-          .setDesc("Folder path for cached images (vault root)")
+          .setName(t("settings.cacheFolder"))
+          .setDesc(t("settings.cacheFolderDesc"))
           .addText((text) =>
             text
               .setValue(this.plugin.settings.cacheFolder)
               .onChange(async (value) => {
-                this.plugin.settings.cacheFolder = value || "cards4links-cache";
+                this.plugin.settings.cacheFolder =
+                  value || "cards4links-cache";
                 await this.plugin.saveSettings();
               })
           );
       }
 
       new Setting(containerEl)
-        .setName("Cache TTL")
-        .setDesc("How long before re-downloading a cached image")
+        .setName(t("settings.cacheTtl"))
+        .setDesc(t("settings.cacheTtlDesc"))
         .addDropdown((dropdown) =>
           dropdown
-            .addOption("7", "7 days")
-            .addOption("30", "30 days")
-            .addOption("90", "90 days")
-            .addOption("180", "180 days")
-            .addOption("0", "Never expire")
+            .addOption("7", t("settings.ttl.7"))
+            .addOption("30", t("settings.ttl.30"))
+            .addOption("90", t("settings.ttl.90"))
+            .addOption("180", t("settings.ttl.180"))
+            .addOption("0", t("settings.ttl.0"))
             .setValue(String(this.plugin.settings.cacheTTL))
             .onChange(async (value) => {
               this.plugin.settings.cacheTTL = parseInt(value);
@@ -239,11 +257,11 @@ export class Cards4LinksSettingTab extends PluginSettingTab {
         );
 
       new Setting(containerEl)
-        .setName("Manage cache")
-        .setDesc("View cache contents and clean up files")
+        .setName(t("settings.manageCache"))
+        .setDesc(t("settings.manageCacheDesc"))
         .addButton((btn) =>
           btn
-            .setButtonText("Manage cache…")
+            .setButtonText(t("settings.manageCacheButton"))
             .onClick(() => {
               const modal = new CacheCleanupModal(
                 this.plugin.app,

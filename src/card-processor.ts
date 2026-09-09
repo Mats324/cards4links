@@ -2,6 +2,7 @@ import { App, MarkdownView, Modal, Notice, Setting, TFile, parseYaml } from "obs
 import { LinkMetadata, ContentType } from "./metadata-parser";
 import type { ThumbnailPosition, CardView, CardTheme, CacheLocation } from "./settings";
 import { EditorExtensions } from "./editor-extensions";
+import { t } from "./i18n";
 import {
   resolveResourceUrl,
   getManifest,
@@ -82,8 +83,8 @@ export class CardProcessor {
         cls: "cards4links-carousel",
         attr: {
           role: "region",
-          "aria-label": "Card carousel",
-          "aria-roledescription": "carousel",
+          "aria-label": t("aria.carousel"),
+          "aria-roledescription": t("aria.carouselRoledescription"),
         },
       });
 
@@ -99,8 +100,11 @@ export class CardProcessor {
           cls: "cards4links-carousel-slide",
           attr: {
             role: "group",
-            "aria-roledescription": "slide",
-            "aria-label": `Slide ${i + 1} of ${this.sections.length}`,
+            "aria-roledescription": t("aria.slideRoledescription"),
+            "aria-label": t("aria.slideOf", {
+              current: i + 1,
+              total: this.sections.length,
+            }),
           },
         });
         try {
@@ -113,7 +117,7 @@ export class CardProcessor {
 
       const dotsContainer = carousel.createDiv({
         cls: "cards4links-carousel-dots",
-        attr: { role: "tablist", "aria-label": "Slide navigation" },
+        attr: { role: "tablist", "aria-label": t("aria.slideNavigation") },
       });
 
       for (let i = 0; i < this.sections.length; i++) {
@@ -122,7 +126,7 @@ export class CardProcessor {
           attr: {
             role: "tab",
             "aria-selected": i === 0 ? "true" : "false",
-            "aria-label": `Go to slide ${i + 1}`,
+            "aria-label": t("aria.goToSlide", { index: i + 1 }),
             "data-index": String(i),
           },
         });
@@ -132,7 +136,7 @@ export class CardProcessor {
       const prevBtn = carousel.createEl("button", {
         cls: "cards4links-carousel-prev",
         attr: {
-          "aria-label": "Previous slide",
+          "aria-label": t("aria.previousSlide"),
           disabled: "",
         },
       });
@@ -144,7 +148,7 @@ export class CardProcessor {
 
       const nextBtn = carousel.createEl("button", {
         cls: "cards4links-carousel-next",
-        attr: { "aria-label": "Next slide" },
+        attr: { "aria-label": t("aria.nextSlide") },
       });
       nextBtn.appendChild(
         createSvgIcon("0 0 24 24", 18,
@@ -174,15 +178,11 @@ export class CardProcessor {
       yaml = parseYaml(normalized) as Partial<LinkMetadata>;
     } catch (error) {
       console.log("Cards4Links YAML parse error:", error);
-      throw new YamlParseError(
-        "Failed to parse YAML. Check debug console for details."
-      );
+      throw new YamlParseError(t("error.yamlParse"));
     }
 
     if (!yaml || !yaml.url || !yaml.title) {
-      throw new NoRequiredParamsError(
-        "Required params [url, title] not found."
-      );
+      throw new NoRequiredParamsError(t("error.requiredParams"));
     }
 
     return {
@@ -217,7 +217,7 @@ export class CardProcessor {
     if (needsUpgrade) {
       const upgradeBtn = actionsBar.createEl("button", {
         cls: "cards4links-upgrade-btn clickable-icon",
-        attr: { "aria-label": "Add view field to card" },
+        attr: { "aria-label": t("aria.addViewField") },
       });
       upgradeBtn.appendChild(
         createSvgIcon("0 0 24 24", 14,
@@ -244,7 +244,11 @@ export class CardProcessor {
 
       const viewBtn = actionsBar.createEl("button", {
         cls: "cards4links-view-btn clickable-icon",
-        attr: { "aria-label": `View: ${view}` },
+        attr: {
+          "aria-label": t("aria.view", {
+            view: this.localizeView(view),
+          }),
+        },
       });
       viewBtn.appendChild(
         createSvgIcon("0 0 24 24", 14,
@@ -263,13 +267,13 @@ export class CardProcessor {
       });
     }
 
-    const label = data.contentType === "video" ? "Watched" : "Read";
+    const label = data.contentType === "video" ? t("label.watched") : t("label.read");
     const watchToggleBtn = actionsBar.createEl("button", {
       cls: "cards4links-watch-toggle clickable-icon",
       attr: {
         "aria-label": data.watched
-          ? "Mark as Unread"
-          : `Mark as ${label}`,
+          ? t("aria.markUnread")
+          : t("aria.markAs", { label }),
       },
     });
     const checkedSvg = createSvgIcon("0 0 24 24", 14,
@@ -289,7 +293,7 @@ export class CardProcessor {
       watchToggleBtn.appendChild(newWatched ? checkedSvg.cloneNode(true) : uncheckedSvg.cloneNode(true));
       watchToggleBtn.setAttr(
         "aria-label",
-        newWatched ? "Mark as Unread" : `Mark as ${label}`
+        newWatched ? t("aria.markUnread") : t("aria.markAs", { label })
       );
       this.updateCardBlock(cardIndex, "watched", newWatched);
     });
@@ -347,7 +351,7 @@ export class CardProcessor {
 
     const copyBtn = container.createEl("button", {
       cls: "cards4links-copy-url clickable-icon",
-      attr: { "aria-label": `Copy URL\n${data.url}` },
+      attr: { "aria-label": t("aria.copyUrl", { url: data.url }) },
     });
     copyBtn.appendChild(
       createSvgIcon("0 0 24 24", 16,
@@ -357,7 +361,7 @@ export class CardProcessor {
     copyBtn.addEventListener("click", (e) => {
       e.stopPropagation();
       void navigator.clipboard.writeText(data.url);
-      new Notice("URL copied to clipboard");
+      new Notice(t("notice.urlCopied"));
     });
 
     // Append to DOM
@@ -459,7 +463,7 @@ export class CardProcessor {
 
     placeholder.createSpan({
       cls: "cards4links-img-placeholder-text",
-      text: "Set image",
+      text: t("placeholder.setImage"),
     });
 
     placeholder.addEventListener("click", (e) => {
@@ -489,7 +493,7 @@ export class CardProcessor {
     );
 
     placeholder.createSpan({
-      text: "Add description",
+      text: t("placeholder.addDescription"),
     });
 
     placeholder.addEventListener("click", (e) => {
@@ -531,7 +535,7 @@ export class CardProcessor {
     const markdownView = this.app.workspace.getActiveViewOfType(MarkdownView);
     if (!markdownView) {
       console.log("Cards4Links: no active MarkdownView");
-      new Notice("Cards4Links: cannot edit in Reading view");
+      new Notice(t("notice.cannotEditReading"));
       return;
     }
     const editor = markdownView.editor;
@@ -569,7 +573,7 @@ export class CardProcessor {
         );
       } catch (e) {
         console.log("Cards4Links: failed to update code block", e);
-        new Notice("Cards4Links: error updating card state");
+        new Notice(t("notice.errorUpdatingCard"));
       }
       break;
     }
@@ -577,8 +581,21 @@ export class CardProcessor {
 
   private renderError(error: Error): HTMLElement {
     const container = createDiv({ cls: "cards4links-error" });
-    container.setText(`cardlink error: ${error.message}`);
+    container.setText(t("error.cardlink", { message: error.message }));
     return container;
+  }
+
+  private localizeView(view: string): string {
+    switch (view) {
+      case "compact":
+        return t("settings.view.compact");
+      case "minimal":
+        return t("settings.view.minimal");
+      case "carousel":
+        return t("settings.view.carousel");
+      default:
+        return t("settings.view.card");
+    }
   }
 
   private setupCarouselNav(
@@ -680,14 +697,14 @@ class ImagePickerModal extends Modal {
   onOpen(): void {
     const { contentEl } = this;
     contentEl.addClass("cards4links-modal");
-    contentEl.createEl("h2", { text: "Set card image" });
+    contentEl.createEl("h2", { text: t("modal.setImageTitle") });
 
     let imageUrl = this.currentUrl;
     let textInput: HTMLInputElement;
 
     new Setting(contentEl)
-      .setName("Image URL")
-      .setDesc("Enter or paste a URL for the card image")
+      .setName(t("modal.imageUrl"))
+      .setDesc(t("modal.imageUrlDesc"))
       .addText((text) => {
         text.setValue(imageUrl);
         text.onChange((value) => {
@@ -699,7 +716,7 @@ class ImagePickerModal extends Modal {
       })
       .addExtraButton((btn) => {
         btn.setIcon("clipboard");
-        btn.setTooltip("Paste from clipboard");
+        btn.setTooltip(t("modal.pasteFromClipboard"));
         btn.onClick(async () => {
           try {
             const clipboardText = await navigator.clipboard.readText();
@@ -715,7 +732,7 @@ class ImagePickerModal extends Modal {
 
     new Setting(contentEl)
       .addButton((btn) => {
-        btn.setButtonText("Save");
+        btn.setButtonText(t("ui.save"));
         btn.setCta();
         btn.onClick(() => {
           const url = imageUrl.trim();
@@ -727,13 +744,13 @@ class ImagePickerModal extends Modal {
             this.close();
           };
           img.onerror = () => {
-            new Notice("Failed to load image. Please try a different URL.");
+            new Notice(t("notice.imageLoadFailed"));
           };
           img.src = url;
         });
       })
       .addButton((btn) => {
-        btn.setButtonText("Cancel");
+        btn.setButtonText(t("ui.cancel"));
         btn.onClick(() => {
           this.close();
         });
@@ -759,12 +776,12 @@ class DescriptionInputModal extends Modal {
   onOpen(): void {
     const { contentEl } = this;
     contentEl.addClass("cards4links-modal");
-    contentEl.createEl("h2", { text: "Set card description" });
+    contentEl.createEl("h2", { text: t("modal.setDescriptionTitle") });
 
     let description = "";
 
     new Setting(contentEl)
-      .setName("Description")
+      .setName(t("modal.description"))
       .addTextArea((text) => {
         text.setValue(description);
         text.onChange((value) => {
@@ -776,7 +793,7 @@ class DescriptionInputModal extends Modal {
 
     new Setting(contentEl)
       .addButton((btn) => {
-        btn.setButtonText("Save");
+        btn.setButtonText(t("ui.save"));
         btn.setCta();
         btn.onClick(() => {
           this.onSubmit(description);
@@ -784,7 +801,7 @@ class DescriptionInputModal extends Modal {
         });
       })
       .addButton((btn) => {
-        btn.setButtonText("Cancel");
+        btn.setButtonText(t("ui.cancel"));
         btn.onClick(() => {
           this.close();
         });

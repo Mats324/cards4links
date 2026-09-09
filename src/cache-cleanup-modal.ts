@@ -1,5 +1,6 @@
 import { App, Modal, Notice } from "obsidian";
 import Cards4Links from "./main";
+import { t } from "./i18n";
 import {
   getManifest,
   deleteFiles,
@@ -26,11 +27,13 @@ function fmtAge(iso: string): string {
   const days = Math.floor(
     (Date.now() - new Date(iso).getTime()) / 86400000
   );
-  if (days < 1) return "today";
-  if (days === 1) return "1 day";
-  if (days < 30) return `${days} days`;
+  if (days < 1) return t("cache.age.today");
+  if (days === 1) return t("cache.age.oneDay");
+  if (days < 30) return t("cache.age.days", { days });
   const months = Math.floor(days / 30);
-  return months === 1 ? "1 month" : `${months} months`;
+  return months === 1
+    ? t("cache.age.oneMonth")
+    : t("cache.age.months", { months });
 }
 
 export class CacheCleanupModal extends Modal {
@@ -51,10 +54,10 @@ export class CacheCleanupModal extends Modal {
     contentEl.addClass("cards4links-modal");
     contentEl.empty();
 
-    contentEl.createEl("h2", { text: "Cache Cleanup" });
+    contentEl.createEl("h2", { text: t("cache.title") });
 
     this.container = contentEl.createDiv();
-    this.container.setText("Scanning cache…");
+    this.container.setText(t("cache.scanning"));
 
     await this.loadData();
     this.render();
@@ -84,7 +87,7 @@ export class CacheCleanupModal extends Modal {
     this.container.empty();
 
     if (this.loading) {
-      this.container.setText("Scanning cache…");
+      this.container.setText(t("cache.scanning"));
       return;
     }
 
@@ -95,36 +98,39 @@ export class CacheCleanupModal extends Modal {
     // Summary
     const summaryEl = this.container.createDiv({ cls: "cards4links-cache-summary" });
     summaryEl.createSpan({
-      text: `${this.rows.length} files — ${fmtSize(totalSize)}`,
+      text: t("cache.summary", {
+        count: this.rows.length,
+        size: fmtSize(totalSize),
+      }),
     });
     if (expiredCount > 0) {
       summaryEl.createSpan({
-        text: ` — ${expiredCount} expired`,
+        text: t("cache.summaryExpired", { count: expiredCount }),
       });
     }
 
     // Action buttons
     const actionsEl = this.container.createDiv({ cls: "cards4links-cache-actions" });
-    actionsEl.createEl("button", { text: "Select all", cls: "clickable-icon" })
+    actionsEl.createEl("button", { text: t("cache.selectAll"), cls: "clickable-icon" })
       .addEventListener("click", () => {
         this.rows.forEach((r) => (r.checked = true));
         this.render();
       });
     if (expiredCount > 0) {
-      actionsEl.createEl("button", { text: "Select expired", cls: "clickable-icon" })
+      actionsEl.createEl("button", { text: t("cache.selectExpired"), cls: "clickable-icon" })
         .addEventListener("click", () => {
           this.rows.forEach((r) => (r.checked = r.expired));
           this.render();
         });
     }
     if (orphanCount > 0) {
-      actionsEl.createEl("button", { text: "Select orphans", cls: "clickable-icon" })
+      actionsEl.createEl("button", { text: t("cache.selectOrphans"), cls: "clickable-icon" })
         .addEventListener("click", () => {
           this.rows.forEach((r) => (r.checked = !r.referenced));
           this.render();
         });
     }
-    actionsEl.createEl("button", { text: "Deselect all", cls: "clickable-icon" })
+    actionsEl.createEl("button", { text: t("cache.deselectAll"), cls: "clickable-icon" })
       .addEventListener("click", () => {
         this.rows.forEach((r) => (r.checked = false));
         this.render();
@@ -135,9 +141,9 @@ export class CacheCleanupModal extends Modal {
     const thead = table.createEl("thead");
     const headerRow = thead.createEl("tr");
     headerRow.createEl("th", { text: "" });
-    headerRow.createEl("th", { text: "File" });
-    headerRow.createEl("th", { text: "Size" });
-    headerRow.createEl("th", { text: "Age" });
+    headerRow.createEl("th", { text: t("cache.headerFile") });
+    headerRow.createEl("th", { text: t("cache.headerSize") });
+    headerRow.createEl("th", { text: t("cache.headerAge") });
     headerRow.createEl("th", { text: "" });
 
     const tbody = table.createEl("tbody");
@@ -160,29 +166,29 @@ export class CacheCleanupModal extends Modal {
 
       const statusTd = tr.createEl("td");
       if (!row.referenced) {
-        statusTd.createSpan({ text: "orphan", cls: "cards4links-cache-orphan" });
+        statusTd.createSpan({ text: t("cache.orphan"), cls: "cards4links-cache-orphan" });
       } else if (row.expired) {
-        statusTd.createSpan({ text: "expired", cls: "cards4links-cache-expired" });
+        statusTd.createSpan({ text: t("cache.expired"), cls: "cards4links-cache-expired" });
       } else {
-        statusTd.createSpan({ text: "ok", cls: "cards4links-cache-ok" });
+        statusTd.createSpan({ text: t("cache.ok"), cls: "cards4links-cache-ok" });
       }
     }
 
     // Delete button
     const deleteBtn = this.container.createEl("button", {
       cls: "mod-cta",
-      text: "Delete selected",
+      text: t("cache.deleteSelected"),
     });
     deleteBtn.addEventListener("click", async () => {
       const selected = this.rows.filter((r) => r.checked);
       if (selected.length === 0) {
-        new Notice("No files selected");
+        new Notice(t("notice.noFilesSelected"));
         return;
       }
       const filenames = selected.map((r) => r.entry.filename);
       await deleteFiles(this.app, this.folder, filenames);
       this.rows = this.rows.filter((r) => !r.checked);
-      new Notice(`Deleted ${filenames.length} file(s)`);
+      new Notice(t("notice.deletedFiles", { count: filenames.length }));
       this.render();
     });
   }

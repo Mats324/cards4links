@@ -2,6 +2,7 @@ import { App, Editor, Notice, TFile, requestUrl } from "obsidian";
 import { MetadataParser, LinkMetadata } from "./metadata-parser";
 import { EditorExtensions } from "./editor-extensions";
 import type { CardView, CacheLocation } from "./settings";
+import { t } from "./i18n";
 import {
   hashUrl,
   downloadImage,
@@ -27,7 +28,7 @@ export class CardGenerator {
     const placeholder = `[Fetching Data#${placeholderId}](${url})`;
 
     this.editor.replaceSelection(placeholder);
-    new Notice("Cards4Links: fetching metadata...");
+    new Notice(t("notice.fetchingMetadata"));
 
     const metadata = await this.fetchMetadata(url);
     if (metadata && this.cacheImages && metadata.image && this.app) {
@@ -48,7 +49,7 @@ export class CardGenerator {
     const endPos = EditorExtensions.posFromIndex(text, end);
 
     if (!metadata) {
-      new Notice("Cards4Links: couldn't fetch link metadata");
+      new Notice(t("notice.fetchFailed"));
       this.editor.replaceRange(selectedText || url, startPos, endPos);
       return;
     }
@@ -59,7 +60,7 @@ export class CardGenerator {
 
   async convertGroup(urls: string[]): Promise<void> {
     if (urls.length < 2) {
-      new Notice("Cards4Links: select 2+ URLs to create a carousel");
+      new Notice(t("notice.selectTwoUrls"));
       return;
     }
 
@@ -68,7 +69,7 @@ export class CardGenerator {
     const placeholder = `[Fetching Data#${placeholderId}](${urls.length} links)`;
 
     this.editor.replaceSelection(placeholder);
-    new Notice(`Cards4Links: fetching metadata for ${urls.length} links...`);
+    new Notice(t("notice.fetchingMetadataGroup", { count: urls.length }));
 
     const results = await Promise.allSettled(
       urls.map((url) => this.fetchMetadata(url))
@@ -82,7 +83,7 @@ export class CardGenerator {
     }
 
     if (metadataList.length === 0) {
-      new Notice("Cards4Links: couldn't fetch any link metadata");
+      new Notice(t("notice.fetchFailedAll"));
       this.editor.replaceSelection(selectedText || urls.join("\n"));
       return;
     }
@@ -117,9 +118,7 @@ export class CardGenerator {
 
     this.onCardsCreated?.(metadataList.length);
 
-    new Notice(
-      `Cards4Links: created carousel with ${metadataList.length} cards`
-    );
+    new Notice(t("notice.createdCarousel", { count: metadataList.length }));
   }
 
   private generateCodeBlock(md: LinkMetadata): string {

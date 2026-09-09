@@ -48,16 +48,300 @@ __export(main_exports, {
   default: () => Cards4Links
 });
 module.exports = __toCommonJS(main_exports);
-var import_obsidian6 = require("obsidian");
+var import_obsidian7 = require("obsidian");
 
 // src/settings.ts
-var import_obsidian3 = require("obsidian");
+var import_obsidian4 = require("obsidian");
 
 // src/cache-cleanup-modal.ts
-var import_obsidian2 = require("obsidian");
+var import_obsidian3 = require("obsidian");
+
+// src/i18n.ts
+var import_obsidian = require("obsidian");
+var en = {
+  "command.pasteAndEnhance": "Paste URL and enhance to card link",
+  "command.upgradeOldCards": "Add view field to old cardlink cards",
+  "command.enhanceSelected": "Enhance selected URL to card link",
+  "command.createCarousel": "Create carousel from selected URLs",
+  "command.openSettings": "Open plugin settings",
+  "notice.welcome": "Cards4Links activated! Paste a URL into a note, or select a URL and press Mod+Shift+E.",
+  "milestone.1": "First card created! \u{1F389} Enable 'Enhance default paste' in settings to convert URLs automatically on paste.",
+  "milestone.3": "3 cards created! Select 2+ URLs and press Mod+Shift+C to build a carousel.",
+  "milestone.5": "5 cards created! \u{1F389} Thanks for using Cards4Links! https://github.com/Mats324/cards4links",
+  "milestone.10": "10 cards created! Try a card theme (light/dark) in settings for a different look.",
+  "milestone.25": "25 cards created! Enable the 'watched/read' checkbox to track videos and articles.",
+  "milestone.50": "50 cards created! Explore other card views (compact, minimal) to save space.",
+  "milestone.100": "100 cards created! Turn on 'Cache images locally' to keep card images available offline.",
+  "notice.selectTwoUrls": "Cards4Links: select 2+ URLs to create a carousel",
+  "notice.noOldCards": "Cards4Links: no old cards found",
+  "notice.updatedCards": "Cards4Links: updated {count} card(s)",
+  "notice.fetchingMetadata": "Cards4Links: fetching metadata...",
+  "notice.fetchFailed": "Cards4Links: couldn't fetch link metadata",
+  "notice.fetchingMetadataGroup": "Cards4Links: fetching metadata for {count} links...",
+  "notice.fetchFailedAll": "Cards4Links: couldn't fetch any link metadata",
+  "notice.createdCarousel": "Cards4Links: created carousel with {count} cards",
+  "notice.urlCopied": "URL copied to clipboard",
+  "notice.cannotEditReading": "Cards4Links: cannot edit in Reading view",
+  "notice.errorUpdatingCard": "Cards4Links: error updating card state",
+  "notice.imageLoadFailed": "Failed to load image. Please try a different URL.",
+  "error.yamlParse": "Failed to parse YAML. Check debug console for details.",
+  "error.requiredParams": "Required params [url, title] not found.",
+  "error.cardlink": "cardlink error: {message}",
+  "label.watched": "Watched",
+  "label.read": "Read",
+  "aria.carousel": "Card carousel",
+  "aria.carouselRoledescription": "carousel",
+  "aria.slideRoledescription": "slide",
+  "aria.slideOf": "Slide {current} of {total}",
+  "aria.slideNavigation": "Slide navigation",
+  "aria.goToSlide": "Go to slide {index}",
+  "aria.previousSlide": "Previous slide",
+  "aria.nextSlide": "Next slide",
+  "aria.addViewField": "Add view field to card",
+  "aria.view": "View: {view}",
+  "aria.markAs": "Mark as {label}",
+  "aria.markUnread": "Mark as Unread",
+  "aria.copyUrl": "Copy URL\n{url}",
+  "placeholder.setImage": "Set image",
+  "placeholder.addDescription": "Add description",
+  "modal.setImageTitle": "Set card image",
+  "modal.imageUrl": "Image URL",
+  "modal.imageUrlDesc": "Enter or paste a URL for the card image",
+  "modal.pasteFromClipboard": "Paste from clipboard",
+  "modal.setDescriptionTitle": "Set card description",
+  "modal.description": "Description",
+  "ui.save": "Save",
+  "ui.cancel": "Cancel",
+  "settings.language": "Language",
+  "settings.languageDesc": "Interface language (auto follows the Obsidian language)",
+  "settings.language.auto": "Auto",
+  "settings.language.en": "English",
+  "settings.language.it": "Italiano",
+  "settings.cardsCreated": "Cards created",
+  "settings.cardsCreatedDesc": "Number of cards generated with Cards4Links since the last reset: {count}",
+  "settings.resetCounter": "Reset counter",
+  "settings.resetCounterConfirm": "Reset the card counter? This will also restart the milestone notifications.",
+  "settings.enhancePaste": "Enhance default paste",
+  "settings.enhancePasteDesc": "Automatically fetch metadata when pasting a URL with the default paste command",
+  "settings.thumbnailPosition": "Thumbnail position",
+  "settings.thumbnailPositionDesc": "Where to show the thumbnail image in the card",
+  "settings.thumbnail.right": "Right",
+  "settings.thumbnail.left": "Left",
+  "settings.thumbnail.none": "No thumbnail",
+  "settings.showInMenu": "Show commands in menu item",
+  "settings.showInMenuDesc": "Add paste/enhance commands to the right-click context menu",
+  "settings.enableWatched": "Enable watched/read checkbox",
+  "settings.enableWatchedDesc": "Show a checkbox on cards to track watched (video) or read (article) status",
+  "settings.defaultView": "Default card view",
+  "settings.defaultViewDesc": "Default view style for newly created cards",
+  "settings.view.card": "Card",
+  "settings.view.compact": "Compact",
+  "settings.view.minimal": "Minimal",
+  "settings.view.carousel": "Carousel",
+  "settings.theme": "Card theme",
+  "settings.themeDesc": "Override card colors (default follows Obsidian theme)",
+  "settings.theme.default": "Default",
+  "settings.theme.light": "Light",
+  "settings.theme.dark": "Dark",
+  "settings.cacheImages": "Cache images locally",
+  "settings.cacheImagesDesc": "Download card images to the vault for offline access",
+  "settings.cacheStorage": "Cache storage",
+  "settings.cacheStorageDesc": "Store images in a global vault folder or next to each note",
+  "settings.cacheLocation.vault": "Global folder",
+  "settings.cacheLocation.note": "Per note",
+  "settings.cacheFolder": "Cache folder name",
+  "settings.cacheFolderDesc": "Folder path for cached images (vault root)",
+  "settings.cacheTtl": "Cache TTL",
+  "settings.cacheTtlDesc": "How long before re-downloading a cached image",
+  "settings.ttl.7": "7 days",
+  "settings.ttl.30": "30 days",
+  "settings.ttl.90": "90 days",
+  "settings.ttl.180": "180 days",
+  "settings.ttl.0": "Never expire",
+  "settings.manageCache": "Manage cache",
+  "settings.manageCacheDesc": "View cache contents and clean up files",
+  "settings.manageCacheButton": "Manage cache\u2026",
+  "cache.title": "Cache Cleanup",
+  "cache.scanning": "Scanning cache\u2026",
+  "cache.summary": "{count} files \u2014 {size}",
+  "cache.summaryExpired": " \u2014 {count} expired",
+  "cache.selectAll": "Select all",
+  "cache.selectExpired": "Select expired",
+  "cache.selectOrphans": "Select orphans",
+  "cache.deselectAll": "Deselect all",
+  "cache.headerFile": "File",
+  "cache.headerSize": "Size",
+  "cache.headerAge": "Age",
+  "cache.orphan": "orphan",
+  "cache.expired": "expired",
+  "cache.ok": "ok",
+  "cache.deleteSelected": "Delete selected",
+  "notice.noFilesSelected": "No files selected",
+  "notice.deletedFiles": "Deleted {count} file(s)",
+  "cache.age.today": "today",
+  "cache.age.oneDay": "1 day",
+  "cache.age.days": "{days} days",
+  "cache.age.oneMonth": "1 month",
+  "cache.age.months": "{months} months"
+};
+var it = {
+  "command.pasteAndEnhance": "Incolla URL e converti in card link",
+  "command.upgradeOldCards": "Aggiungi campo view alle card cardlink datate",
+  "command.enhanceSelected": "Converti l'URL selezionato in card link",
+  "command.createCarousel": "Crea carosello dagli URL selezionati",
+  "command.openSettings": "Apri le impostazioni del plugin",
+  "notice.welcome": "Cards4Links attivato! Incolla un URL in una nota, oppure seleziona un URL e premi Mod+Shift+E.",
+  "milestone.1": "Prima card creata! \u{1F389} Attiva 'Migliora incolla predefinito' nelle impostazioni per convertire automaticamente gli URL in card all'incolla.",
+  "milestone.3": "3 card create! Seleziona 2+ URL e premi Mod+Shift+C per creare un carosello.",
+  "milestone.5": "5 card create! \u{1F389} Grazie per usare Cards4Links! https://github.com/Mats324/cards4links",
+  "milestone.10": "10 card create! Prova un tema card (chiaro/scuro) nelle impostazioni per un aspetto diverso.",
+  "milestone.25": "25 card create! Attiva la checkbox 'guardato/letto' per monitorare video e articoli.",
+  "milestone.50": "50 card create! Esplora le altre viste card (compatta, minimale) per risparmiare spazio.",
+  "milestone.100": "100 card create! Attiva 'Salva immagini localmente' per mantenere le immagini delle card disponibili offline.",
+  "notice.selectTwoUrls": "Cards4Links: seleziona 2+ URL per creare un carosello",
+  "notice.noOldCards": "Cards4Links: nessuna card datata trovata",
+  "notice.updatedCards": "Cards4Links: aggiornate {count} card",
+  "notice.fetchingMetadata": "Cards4Links: recupero metadati...",
+  "notice.fetchFailed": "Cards4Links: impossibile recuperare i metadati del link",
+  "notice.fetchingMetadataGroup": "Cards4Links: recupero metadati per {count} link...",
+  "notice.fetchFailedAll": "Cards4Links: impossibile recuperare i metadati di alcun link",
+  "notice.createdCarousel": "Cards4Links: carosello creato con {count} card",
+  "notice.urlCopied": "URL copiato negli appunti",
+  "notice.cannotEditReading": "Cards4Links: impossibile modificare in Visualizzazione Lettura",
+  "notice.errorUpdatingCard": "Cards4Links: errore durante l'aggiornamento della card",
+  "notice.imageLoadFailed": "Impossibile caricare l'immagine. Prova con un URL diverso.",
+  "error.yamlParse": "Impossibile analizzare lo YAML. Controlla la console di debug per i dettagli.",
+  "error.requiredParams": "Parametri obbligatori [url, title] non trovati.",
+  "error.cardlink": "errore cardlink: {message}",
+  "label.watched": "Visto",
+  "label.read": "Letto",
+  "aria.carousel": "Carosello di card",
+  "aria.carouselRoledescription": "carosello",
+  "aria.slideRoledescription": "slide",
+  "aria.slideOf": "Slide {current} di {total}",
+  "aria.slideNavigation": "Navigazione slide",
+  "aria.goToSlide": "Vai alla slide {index}",
+  "aria.previousSlide": "Slide precedente",
+  "aria.nextSlide": "Slide successiva",
+  "aria.addViewField": "Aggiungi campo view alla card",
+  "aria.view": "Vista: {view}",
+  "aria.markAs": "Segna come {label}",
+  "aria.markUnread": "Segna come Non Letto",
+  "aria.copyUrl": "Copia URL\n{url}",
+  "placeholder.setImage": "Imposta immagine",
+  "placeholder.addDescription": "Aggiungi descrizione",
+  "modal.setImageTitle": "Imposta immagine della card",
+  "modal.imageUrl": "URL immagine",
+  "modal.imageUrlDesc": "Inserisci o incolla l'URL per l'immagine della card",
+  "modal.pasteFromClipboard": "Incolla dagli appunti",
+  "modal.setDescriptionTitle": "Imposta descrizione della card",
+  "modal.description": "Descrizione",
+  "ui.save": "Salva",
+  "ui.cancel": "Annulla",
+  "settings.language": "Lingua",
+  "settings.languageDesc": "Lingua dell'interfaccia (auto segue la lingua di Obsidian)",
+  "settings.language.auto": "Auto",
+  "settings.language.en": "English",
+  "settings.language.it": "Italiano",
+  "settings.cardsCreated": "Card create",
+  "settings.cardsCreatedDesc": "Numero di card generate con Cards4Links dall'ultimo reset: {count}",
+  "settings.resetCounter": "Azzera contatore",
+  "settings.resetCounterConfirm": "Azzera il contatore delle card? Verranno riattivate anche le notifiche dei traguardi.",
+  "settings.enhancePaste": "Migliora incolla predefinito",
+  "settings.enhancePasteDesc": "Recupera automaticamente i metadati quando incolli un URL con il comando di incolla predefinito",
+  "settings.thumbnailPosition": "Posizione anteprima",
+  "settings.thumbnailPositionDesc": "Dove mostrare l'immagine di anteprima nella card",
+  "settings.thumbnail.right": "Destra",
+  "settings.thumbnail.left": "Sinistra",
+  "settings.thumbnail.none": "Nessuna anteprima",
+  "settings.showInMenu": "Mostra comandi nel menu contestuale",
+  "settings.showInMenuDesc": "Aggiungi i comandi incolla/converti al menu contestuale del tasto destro",
+  "settings.enableWatched": "Attiva checkbox visto/letto",
+  "settings.enableWatchedDesc": "Mostra una checkbox sulle card per monitorare lo stato visto (video) o letto (articolo)",
+  "settings.defaultView": "Vista predefinita della card",
+  "settings.defaultViewDesc": "Stile di vista predefinito per le nuove card",
+  "settings.view.card": "Card",
+  "settings.view.compact": "Compatta",
+  "settings.view.minimal": "Minimale",
+  "settings.view.carousel": "Carosello",
+  "settings.theme": "Tema card",
+  "settings.themeDesc": "Sovrascrivi i colori delle card (predefinito segue il tema di Obsidian)",
+  "settings.theme.default": "Predefinito",
+  "settings.theme.light": "Chiaro",
+  "settings.theme.dark": "Scuro",
+  "settings.cacheImages": "Salva immagini localmente",
+  "settings.cacheImagesDesc": "Scarica le immagini delle card nel vault per l'accesso offline",
+  "settings.cacheStorage": "Archiviazione cache",
+  "settings.cacheStorageDesc": "Salva le immagini in una cartella globale del vault o accanto a ogni nota",
+  "settings.cacheLocation.vault": "Cartella globale",
+  "settings.cacheLocation.note": "Per nota",
+  "settings.cacheFolder": "Nome cartella cache",
+  "settings.cacheFolderDesc": "Percorso cartella per le immagini in cache (root del vault)",
+  "settings.cacheTtl": "TTL cache",
+  "settings.cacheTtlDesc": "Dopo quanto tempo riscaricare un'immagine in cache",
+  "settings.ttl.7": "7 giorni",
+  "settings.ttl.30": "30 giorni",
+  "settings.ttl.90": "90 giorni",
+  "settings.ttl.180": "180 giorni",
+  "settings.ttl.0": "Mai",
+  "settings.manageCache": "Gestisci cache",
+  "settings.manageCacheDesc": "Visualizza il contenuto della cache e ripulisci i file",
+  "settings.manageCacheButton": "Gestisci cache\u2026",
+  "cache.title": "Pulizia cache",
+  "cache.scanning": "Analisi cache in corso\u2026",
+  "cache.summary": "{count} file \u2014 {size}",
+  "cache.summaryExpired": " \u2014 {count} scaduti",
+  "cache.selectAll": "Seleziona tutto",
+  "cache.selectExpired": "Seleziona scaduti",
+  "cache.selectOrphans": "Seleziona orfani",
+  "cache.deselectAll": "Deseleziona tutto",
+  "cache.headerFile": "File",
+  "cache.headerSize": "Dimensione",
+  "cache.headerAge": "Et\xE0",
+  "cache.orphan": "orfano",
+  "cache.expired": "scaduto",
+  "cache.ok": "ok",
+  "cache.deleteSelected": "Elimina selezionati",
+  "notice.noFilesSelected": "Nessun file selezionato",
+  "notice.deletedFiles": "Eliminati {count} file",
+  "cache.age.today": "oggi",
+  "cache.age.oneDay": "1 giorno",
+  "cache.age.days": "{days} giorni",
+  "cache.age.oneMonth": "1 mese",
+  "cache.age.months": "{months} mesi"
+};
+var dictionaries = { en, it };
+var currentLang = "en";
+function setLanguage(lang) {
+  currentLang = lang;
+}
+function detectLang() {
+  var _a, _b;
+  let locale = "";
+  try {
+    locale = import_obsidian.moment.locale();
+  } catch (e) {
+    locale = (_a = navigator == null ? void 0 : navigator.language) != null ? _a : "";
+  }
+  if (!locale) locale = (_b = navigator == null ? void 0 : navigator.language) != null ? _b : "";
+  return locale.toLowerCase().startsWith("it") ? "it" : "en";
+}
+function resolveLang(setting) {
+  if (setting === "en" || setting === "it") return setting;
+  return detectLang();
+}
+function t(key, vars) {
+  let str = dictionaries[currentLang][key];
+  if (vars) {
+    for (const [name, value] of Object.entries(vars)) {
+      str = str.split(`{${name}}`).join(String(value));
+    }
+  }
+  return str;
+}
 
 // src/image-cache.ts
-var import_obsidian = require("obsidian");
+var import_obsidian2 = require("obsidian");
 function extension(url) {
   const match = url.match(/\.(jpe?g|png|gif|webp|bmp|svg|ico)(\?|#|$)/i);
   return match ? match[1].toLowerCase() : "jpg";
@@ -72,7 +356,7 @@ function hashUrl(url) {
 }
 function downloadImage(url) {
   return __async(this, null, function* () {
-    const res = yield (0, import_obsidian.requestUrl)(url);
+    const res = yield (0, import_obsidian2.requestUrl)(url);
     return res.arrayBuffer;
   });
 }
@@ -86,7 +370,7 @@ function getCacheFolderPath(activeFile, location, folderName) {
 function ensureFolder(app, path) {
   return __async(this, null, function* () {
     const existing = app.vault.getAbstractFileByPath(path);
-    if (existing && existing instanceof import_obsidian.TFolder) return;
+    if (existing && existing instanceof import_obsidian2.TFolder) return;
     yield app.vault.createFolder(path);
   });
 }
@@ -94,7 +378,7 @@ var MANIFEST_FILE = "_manifest.json";
 function getManifest(app, folder) {
   return __async(this, null, function* () {
     const file = app.vault.getAbstractFileByPath(`${folder}/${MANIFEST_FILE}`);
-    if (!file || !(file instanceof import_obsidian.TFile)) {
+    if (!file || !(file instanceof import_obsidian2.TFile)) {
       return { version: 1, files: [] };
     }
     try {
@@ -110,7 +394,7 @@ function saveManifest(app, folder, manifest) {
     const path = `${folder}/${MANIFEST_FILE}`;
     const existing = app.vault.getAbstractFileByPath(path);
     const content = JSON.stringify(manifest, null, 2);
-    if (existing && existing instanceof import_obsidian.TFile) {
+    if (existing && existing instanceof import_obsidian2.TFile) {
       yield app.vault.modify(existing, content);
     } else {
       yield app.vault.create(path, content);
@@ -154,7 +438,7 @@ function deleteFiles(app, folder, filenames) {
 function resolveResourceUrl(app, localPath) {
   return __async(this, null, function* () {
     const file = app.vault.getAbstractFileByPath(localPath);
-    if (!file || !(file instanceof import_obsidian.TFile)) return null;
+    if (!file || !(file instanceof import_obsidian2.TFile)) return null;
     return app.vault.getResourcePath(file);
   });
 }
@@ -189,13 +473,13 @@ function fmtAge(iso) {
   const days = Math.floor(
     (Date.now() - new Date(iso).getTime()) / 864e5
   );
-  if (days < 1) return "today";
-  if (days === 1) return "1 day";
-  if (days < 30) return `${days} days`;
+  if (days < 1) return t("cache.age.today");
+  if (days === 1) return t("cache.age.oneDay");
+  if (days < 30) return t("cache.age.days", { days });
   const months = Math.floor(days / 30);
-  return months === 1 ? "1 month" : `${months} months`;
+  return months === 1 ? t("cache.age.oneMonth") : t("cache.age.months", { months });
 }
-var CacheCleanupModal = class extends import_obsidian2.Modal {
+var CacheCleanupModal = class extends import_obsidian3.Modal {
   constructor(app, plugin) {
     super(app);
     this.plugin = plugin;
@@ -208,9 +492,9 @@ var CacheCleanupModal = class extends import_obsidian2.Modal {
       const { contentEl } = this;
       contentEl.addClass("cards4links-modal");
       contentEl.empty();
-      contentEl.createEl("h2", { text: "Cache Cleanup" });
+      contentEl.createEl("h2", { text: t("cache.title") });
       this.container = contentEl.createDiv();
-      this.container.setText("Scanning cache\u2026");
+      this.container.setText(t("cache.scanning"));
       yield this.loadData();
       this.render();
     });
@@ -237,7 +521,7 @@ var CacheCleanupModal = class extends import_obsidian2.Modal {
   render() {
     this.container.empty();
     if (this.loading) {
-      this.container.setText("Scanning cache\u2026");
+      this.container.setText(t("cache.scanning"));
       return;
     }
     const totalSize = this.rows.reduce((s, r) => s + r.entry.size, 0);
@@ -245,31 +529,34 @@ var CacheCleanupModal = class extends import_obsidian2.Modal {
     const orphanCount = this.rows.filter((r) => !r.referenced).length;
     const summaryEl = this.container.createDiv({ cls: "cards4links-cache-summary" });
     summaryEl.createSpan({
-      text: `${this.rows.length} files \u2014 ${fmtSize(totalSize)}`
+      text: t("cache.summary", {
+        count: this.rows.length,
+        size: fmtSize(totalSize)
+      })
     });
     if (expiredCount > 0) {
       summaryEl.createSpan({
-        text: ` \u2014 ${expiredCount} expired`
+        text: t("cache.summaryExpired", { count: expiredCount })
       });
     }
     const actionsEl = this.container.createDiv({ cls: "cards4links-cache-actions" });
-    actionsEl.createEl("button", { text: "Select all", cls: "clickable-icon" }).addEventListener("click", () => {
+    actionsEl.createEl("button", { text: t("cache.selectAll"), cls: "clickable-icon" }).addEventListener("click", () => {
       this.rows.forEach((r) => r.checked = true);
       this.render();
     });
     if (expiredCount > 0) {
-      actionsEl.createEl("button", { text: "Select expired", cls: "clickable-icon" }).addEventListener("click", () => {
+      actionsEl.createEl("button", { text: t("cache.selectExpired"), cls: "clickable-icon" }).addEventListener("click", () => {
         this.rows.forEach((r) => r.checked = r.expired);
         this.render();
       });
     }
     if (orphanCount > 0) {
-      actionsEl.createEl("button", { text: "Select orphans", cls: "clickable-icon" }).addEventListener("click", () => {
+      actionsEl.createEl("button", { text: t("cache.selectOrphans"), cls: "clickable-icon" }).addEventListener("click", () => {
         this.rows.forEach((r) => r.checked = !r.referenced);
         this.render();
       });
     }
-    actionsEl.createEl("button", { text: "Deselect all", cls: "clickable-icon" }).addEventListener("click", () => {
+    actionsEl.createEl("button", { text: t("cache.deselectAll"), cls: "clickable-icon" }).addEventListener("click", () => {
       this.rows.forEach((r) => r.checked = false);
       this.render();
     });
@@ -277,9 +564,9 @@ var CacheCleanupModal = class extends import_obsidian2.Modal {
     const thead = table.createEl("thead");
     const headerRow = thead.createEl("tr");
     headerRow.createEl("th", { text: "" });
-    headerRow.createEl("th", { text: "File" });
-    headerRow.createEl("th", { text: "Size" });
-    headerRow.createEl("th", { text: "Age" });
+    headerRow.createEl("th", { text: t("cache.headerFile") });
+    headerRow.createEl("th", { text: t("cache.headerSize") });
+    headerRow.createEl("th", { text: t("cache.headerAge") });
     headerRow.createEl("th", { text: "" });
     const tbody = table.createEl("tbody");
     for (const row of this.rows) {
@@ -296,27 +583,27 @@ var CacheCleanupModal = class extends import_obsidian2.Modal {
       tr.createEl("td", { text: fmtAge(row.entry.cachedAt) });
       const statusTd = tr.createEl("td");
       if (!row.referenced) {
-        statusTd.createSpan({ text: "orphan", cls: "cards4links-cache-orphan" });
+        statusTd.createSpan({ text: t("cache.orphan"), cls: "cards4links-cache-orphan" });
       } else if (row.expired) {
-        statusTd.createSpan({ text: "expired", cls: "cards4links-cache-expired" });
+        statusTd.createSpan({ text: t("cache.expired"), cls: "cards4links-cache-expired" });
       } else {
-        statusTd.createSpan({ text: "ok", cls: "cards4links-cache-ok" });
+        statusTd.createSpan({ text: t("cache.ok"), cls: "cards4links-cache-ok" });
       }
     }
     const deleteBtn = this.container.createEl("button", {
       cls: "mod-cta",
-      text: "Delete selected"
+      text: t("cache.deleteSelected")
     });
     deleteBtn.addEventListener("click", () => __async(this, null, function* () {
       const selected = this.rows.filter((r) => r.checked);
       if (selected.length === 0) {
-        new import_obsidian2.Notice("No files selected");
+        new import_obsidian3.Notice(t("notice.noFilesSelected"));
         return;
       }
       const filenames = selected.map((r) => r.entry.filename);
       yield deleteFiles(this.app, this.folder, filenames);
       this.rows = this.rows.filter((r) => !r.checked);
-      new import_obsidian2.Notice(`Deleted ${filenames.length} file(s)`);
+      new import_obsidian3.Notice(t("notice.deletedFiles", { count: filenames.length }));
       this.render();
     }));
   }
@@ -336,6 +623,7 @@ function isCardTheme(v) {
   return v === "default" || v === "light" || v === "dark";
 }
 var DEFAULT_SETTINGS = {
+  language: "auto",
   enhanceDefaultPaste: false,
   thumbnailPosition: "right",
   showInMenuItem: true,
@@ -350,7 +638,7 @@ var DEFAULT_SETTINGS = {
   welcomeShown: false,
   milestonesShown: []
 };
-var Cards4LinksSettingTab = class extends import_obsidian3.PluginSettingTab {
+var Cards4LinksSettingTab = class extends import_obsidian4.PluginSettingTab {
   constructor(app, plugin) {
     super(app, plugin);
     this.plugin = plugin;
@@ -358,14 +646,22 @@ var Cards4LinksSettingTab = class extends import_obsidian3.PluginSettingTab {
   display() {
     const { containerEl } = this;
     containerEl.empty();
-    const counterSetting = new import_obsidian3.Setting(containerEl).setName("Cards created").setDesc(
-      `Number of cards generated with Cards4Links since the last reset: ${this.plugin.settings.cardsCreated}`
+    new import_obsidian4.Setting(containerEl).setName(t("settings.language")).setDesc(t("settings.languageDesc")).addDropdown(
+      (dropdown) => dropdown.addOption("auto", t("settings.language.auto")).addOption("en", t("settings.language.en")).addOption("it", t("settings.language.it")).setValue(this.plugin.settings.language).onChange((value) => __async(this, null, function* () {
+        if (value !== "auto" && value !== "en" && value !== "it") return;
+        this.plugin.setLanguage(value);
+        yield this.plugin.saveSettings();
+        this.display();
+      }))
+    );
+    const counterSetting = new import_obsidian4.Setting(containerEl).setName(t("settings.cardsCreated")).setDesc(
+      t("settings.cardsCreatedDesc", {
+        count: this.plugin.settings.cardsCreated
+      })
     );
     counterSetting.addButton(
-      (btn) => btn.setButtonText("Reset counter").setWarning().onClick(() => __async(this, null, function* () {
-        const confirmed = window.confirm(
-          "Reset the card counter? This will also restart the milestone notifications."
-        );
+      (btn) => btn.setButtonText(t("settings.resetCounter")).setWarning().onClick(() => __async(this, null, function* () {
+        const confirmed = window.confirm(t("settings.resetCounterConfirm"));
         if (!confirmed) return;
         this.plugin.settings.cardsCreated = 0;
         this.plugin.settings.milestonesShown = [];
@@ -373,50 +669,46 @@ var Cards4LinksSettingTab = class extends import_obsidian3.PluginSettingTab {
         this.display();
       }))
     );
-    new import_obsidian3.Setting(containerEl).setName("Enhance default paste").setDesc(
-      "Automatically fetch metadata when pasting a URL with the default paste command"
-    ).addToggle(
+    new import_obsidian4.Setting(containerEl).setName(t("settings.enhancePaste")).setDesc(t("settings.enhancePasteDesc")).addToggle(
       (toggle) => toggle.setValue(this.plugin.settings.enhanceDefaultPaste).onChange((value) => __async(this, null, function* () {
         this.plugin.settings.enhanceDefaultPaste = value;
         yield this.plugin.saveSettings();
       }))
     );
-    new import_obsidian3.Setting(containerEl).setName("Thumbnail position").setDesc("Where to show the thumbnail image in the card").addDropdown(
-      (dropdown) => dropdown.addOption("right", "Right").addOption("left", "Left").addOption("none", "No thumbnail").setValue(this.plugin.settings.thumbnailPosition).onChange((value) => __async(this, null, function* () {
+    new import_obsidian4.Setting(containerEl).setName(t("settings.thumbnailPosition")).setDesc(t("settings.thumbnailPositionDesc")).addDropdown(
+      (dropdown) => dropdown.addOption("right", t("settings.thumbnail.right")).addOption("left", t("settings.thumbnail.left")).addOption("none", t("settings.thumbnail.none")).setValue(this.plugin.settings.thumbnailPosition).onChange((value) => __async(this, null, function* () {
         if (!isThumbnailPosition(value)) return;
         this.plugin.settings.thumbnailPosition = value;
         yield this.plugin.saveSettings();
       }))
     );
-    new import_obsidian3.Setting(containerEl).setName("Show commands in menu item").setDesc("Add paste/enhance commands to the right-click context menu").addToggle(
+    new import_obsidian4.Setting(containerEl).setName(t("settings.showInMenu")).setDesc(t("settings.showInMenuDesc")).addToggle(
       (toggle) => toggle.setValue(this.plugin.settings.showInMenuItem).onChange((value) => __async(this, null, function* () {
         this.plugin.settings.showInMenuItem = value;
         yield this.plugin.saveSettings();
       }))
     );
-    new import_obsidian3.Setting(containerEl).setName("Enable watched/read checkbox").setDesc(
-      "Show a checkbox on cards to track watched (video) or read (article) status"
-    ).addToggle(
+    new import_obsidian4.Setting(containerEl).setName(t("settings.enableWatched")).setDesc(t("settings.enableWatchedDesc")).addToggle(
       (toggle) => toggle.setValue(this.plugin.settings.enableWatched).onChange((value) => __async(this, null, function* () {
         this.plugin.settings.enableWatched = value;
         yield this.plugin.saveSettings();
       }))
     );
-    new import_obsidian3.Setting(containerEl).setName("Default card view").setDesc("Default view style for newly created cards").addDropdown(
-      (dropdown) => dropdown.addOption("card", "Card").addOption("compact", "Compact").addOption("minimal", "Minimal").setValue(this.plugin.settings.defaultView).onChange((value) => __async(this, null, function* () {
+    new import_obsidian4.Setting(containerEl).setName(t("settings.defaultView")).setDesc(t("settings.defaultViewDesc")).addDropdown(
+      (dropdown) => dropdown.addOption("card", t("settings.view.card")).addOption("compact", t("settings.view.compact")).addOption("minimal", t("settings.view.minimal")).setValue(this.plugin.settings.defaultView).onChange((value) => __async(this, null, function* () {
         if (!isCardView(value)) return;
         this.plugin.settings.defaultView = value;
         yield this.plugin.saveSettings();
       }))
     );
-    new import_obsidian3.Setting(containerEl).setName("Card theme").setDesc("Override card colors (default follows Obsidian theme)").addDropdown(
-      (dropdown) => dropdown.addOption("default", "Default").addOption("light", "Light").addOption("dark", "Dark").setValue(this.plugin.settings.theme).onChange((value) => __async(this, null, function* () {
+    new import_obsidian4.Setting(containerEl).setName(t("settings.theme")).setDesc(t("settings.themeDesc")).addDropdown(
+      (dropdown) => dropdown.addOption("default", t("settings.theme.default")).addOption("light", t("settings.theme.light")).addOption("dark", t("settings.theme.dark")).setValue(this.plugin.settings.theme).onChange((value) => __async(this, null, function* () {
         if (!isCardTheme(value)) return;
         this.plugin.settings.theme = value;
         yield this.plugin.saveSettings();
       }))
     );
-    new import_obsidian3.Setting(containerEl).setName("Cache images locally").setDesc("Download card images to the vault for offline access").addToggle(
+    new import_obsidian4.Setting(containerEl).setName(t("settings.cacheImages")).setDesc(t("settings.cacheImagesDesc")).addToggle(
       (toggle) => toggle.setValue(this.plugin.settings.cacheImages).onChange((value) => __async(this, null, function* () {
         this.plugin.settings.cacheImages = value;
         yield this.plugin.saveSettings();
@@ -424,30 +716,31 @@ var Cards4LinksSettingTab = class extends import_obsidian3.PluginSettingTab {
       }))
     );
     if (this.plugin.settings.cacheImages) {
-      new import_obsidian3.Setting(containerEl).setName("Cache storage").setDesc("Store images in a global vault folder or next to each note").addDropdown(
-        (dropdown) => dropdown.addOption("vault-absolute", "Global folder").addOption("note-relative", "Per note").setValue(this.plugin.settings.cacheLocation).onChange((value) => __async(this, null, function* () {
-          if (value !== "vault-absolute" && value !== "note-relative") return;
+      new import_obsidian4.Setting(containerEl).setName(t("settings.cacheStorage")).setDesc(t("settings.cacheStorageDesc")).addDropdown(
+        (dropdown) => dropdown.addOption("vault-absolute", t("settings.cacheLocation.vault")).addOption("note-relative", t("settings.cacheLocation.note")).setValue(this.plugin.settings.cacheLocation).onChange((value) => __async(this, null, function* () {
+          if (value !== "vault-absolute" && value !== "note-relative")
+            return;
           this.plugin.settings.cacheLocation = value;
           yield this.plugin.saveSettings();
           this.display();
         }))
       );
       if (this.plugin.settings.cacheLocation === "vault-absolute") {
-        new import_obsidian3.Setting(containerEl).setName("Cache folder name").setDesc("Folder path for cached images (vault root)").addText(
+        new import_obsidian4.Setting(containerEl).setName(t("settings.cacheFolder")).setDesc(t("settings.cacheFolderDesc")).addText(
           (text) => text.setValue(this.plugin.settings.cacheFolder).onChange((value) => __async(this, null, function* () {
             this.plugin.settings.cacheFolder = value || "cards4links-cache";
             yield this.plugin.saveSettings();
           }))
         );
       }
-      new import_obsidian3.Setting(containerEl).setName("Cache TTL").setDesc("How long before re-downloading a cached image").addDropdown(
-        (dropdown) => dropdown.addOption("7", "7 days").addOption("30", "30 days").addOption("90", "90 days").addOption("180", "180 days").addOption("0", "Never expire").setValue(String(this.plugin.settings.cacheTTL)).onChange((value) => __async(this, null, function* () {
+      new import_obsidian4.Setting(containerEl).setName(t("settings.cacheTtl")).setDesc(t("settings.cacheTtlDesc")).addDropdown(
+        (dropdown) => dropdown.addOption("7", t("settings.ttl.7")).addOption("30", t("settings.ttl.30")).addOption("90", t("settings.ttl.90")).addOption("180", t("settings.ttl.180")).addOption("0", t("settings.ttl.0")).setValue(String(this.plugin.settings.cacheTTL)).onChange((value) => __async(this, null, function* () {
           this.plugin.settings.cacheTTL = parseInt(value);
           yield this.plugin.saveSettings();
         }))
       );
-      new import_obsidian3.Setting(containerEl).setName("Manage cache").setDesc("View cache contents and clean up files").addButton(
-        (btn) => btn.setButtonText("Manage cache\u2026").onClick(() => {
+      new import_obsidian4.Setting(containerEl).setName(t("settings.manageCache")).setDesc(t("settings.manageCacheDesc")).addButton(
+        (btn) => btn.setButtonText(t("settings.manageCacheButton")).onClick(() => {
           const modal = new CacheCleanupModal(
             this.plugin.app,
             this.plugin
@@ -460,7 +753,7 @@ var Cards4LinksSettingTab = class extends import_obsidian3.PluginSettingTab {
 };
 
 // src/card-generator.ts
-var import_obsidian4 = require("obsidian");
+var import_obsidian5 = require("obsidian");
 
 // src/metadata-parser.ts
 var MetadataParser = class {
@@ -634,7 +927,7 @@ var CardGenerator = class {
       const placeholderId = this.randomId();
       const placeholder = `[Fetching Data#${placeholderId}](${url})`;
       this.editor.replaceSelection(placeholder);
-      new import_obsidian4.Notice("Cards4Links: fetching metadata...");
+      new import_obsidian5.Notice(t("notice.fetchingMetadata"));
       const metadata = yield this.fetchMetadata(url);
       if (metadata && this.cacheImages && metadata.image && this.app) {
         yield this.cacheImage(metadata);
@@ -651,7 +944,7 @@ var CardGenerator = class {
       const startPos = EditorExtensions.posFromIndex(text, start);
       const endPos = EditorExtensions.posFromIndex(text, end);
       if (!metadata) {
-        new import_obsidian4.Notice("Cards4Links: couldn't fetch link metadata");
+        new import_obsidian5.Notice(t("notice.fetchFailed"));
         this.editor.replaceRange(selectedText || url, startPos, endPos);
         return;
       }
@@ -663,14 +956,14 @@ var CardGenerator = class {
     return __async(this, null, function* () {
       var _a;
       if (urls.length < 2) {
-        new import_obsidian4.Notice("Cards4Links: select 2+ URLs to create a carousel");
+        new import_obsidian5.Notice(t("notice.selectTwoUrls"));
         return;
       }
       const selectedText = this.editor.getSelection();
       const placeholderId = this.randomId();
       const placeholder = `[Fetching Data#${placeholderId}](${urls.length} links)`;
       this.editor.replaceSelection(placeholder);
-      new import_obsidian4.Notice(`Cards4Links: fetching metadata for ${urls.length} links...`);
+      new import_obsidian5.Notice(t("notice.fetchingMetadataGroup", { count: urls.length }));
       const results = yield Promise.allSettled(
         urls.map((url) => this.fetchMetadata(url))
       );
@@ -681,7 +974,7 @@ var CardGenerator = class {
         }
       }
       if (metadataList.length === 0) {
-        new import_obsidian4.Notice("Cards4Links: couldn't fetch any link metadata");
+        new import_obsidian5.Notice(t("notice.fetchFailedAll"));
         this.editor.replaceSelection(selectedText || urls.join("\n"));
         return;
       }
@@ -709,9 +1002,7 @@ var CardGenerator = class {
         endPos
       );
       (_a = this.onCardsCreated) == null ? void 0 : _a.call(this, metadataList.length);
-      new import_obsidian4.Notice(
-        `Cards4Links: created carousel with ${metadataList.length} cards`
-      );
+      new import_obsidian5.Notice(t("notice.createdCarousel", { count: metadataList.length }));
     });
   }
   generateCodeBlock(md) {
@@ -747,7 +1038,7 @@ var CardGenerator = class {
   fetchMetadata(url) {
     return __async(this, null, function* () {
       try {
-        const res = yield (0, import_obsidian4.requestUrl)({ url });
+        const res = yield (0, import_obsidian5.requestUrl)({ url });
         if (res.status !== 200) {
           console.log(`Cards4Links: bad response status ${res.status}`);
           return void 0;
@@ -785,7 +1076,7 @@ var CardGenerator = class {
           filename,
           originalUrl: metadata.image,
           cachedAt: (/* @__PURE__ */ new Date()).toISOString(),
-          size: file && file instanceof import_obsidian4.TFile ? file.stat.size : 0
+          size: file && file instanceof import_obsidian5.TFile ? file.stat.size : 0
         });
         metadata.imageLocal = `${folder}/${filename}`;
       } catch (e) {
@@ -804,7 +1095,7 @@ var CardGenerator = class {
 };
 
 // src/card-processor.ts
-var import_obsidian5 = require("obsidian");
+var import_obsidian6 = require("obsidian");
 function createSvgIcon(viewBox, size, ...elements) {
   const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
   svg.setAttribute("viewBox", viewBox);
@@ -873,8 +1164,8 @@ var CardProcessor = class {
         cls: "cards4links-carousel",
         attr: {
           role: "region",
-          "aria-label": "Card carousel",
-          "aria-roledescription": "carousel"
+          "aria-label": t("aria.carousel"),
+          "aria-roledescription": t("aria.carouselRoledescription")
         }
       });
       const viewport = carousel.createDiv({
@@ -887,8 +1178,11 @@ var CardProcessor = class {
           cls: "cards4links-carousel-slide",
           attr: {
             role: "group",
-            "aria-roledescription": "slide",
-            "aria-label": `Slide ${i + 1} of ${this.sections.length}`
+            "aria-roledescription": t("aria.slideRoledescription"),
+            "aria-label": t("aria.slideOf", {
+              current: i + 1,
+              total: this.sections.length
+            })
           }
         });
         try {
@@ -900,7 +1194,7 @@ var CardProcessor = class {
       }
       const dotsContainer = carousel.createDiv({
         cls: "cards4links-carousel-dots",
-        attr: { role: "tablist", "aria-label": "Slide navigation" }
+        attr: { role: "tablist", "aria-label": t("aria.slideNavigation") }
       });
       for (let i = 0; i < this.sections.length; i++) {
         const dot = dotsContainer.createEl("button", {
@@ -908,7 +1202,7 @@ var CardProcessor = class {
           attr: {
             role: "tab",
             "aria-selected": i === 0 ? "true" : "false",
-            "aria-label": `Go to slide ${i + 1}`,
+            "aria-label": t("aria.goToSlide", { index: i + 1 }),
             "data-index": String(i)
           }
         });
@@ -917,7 +1211,7 @@ var CardProcessor = class {
       const prevBtn = carousel.createEl("button", {
         cls: "cards4links-carousel-prev",
         attr: {
-          "aria-label": "Previous slide",
+          "aria-label": t("aria.previousSlide"),
           disabled: ""
         }
       });
@@ -930,7 +1224,7 @@ var CardProcessor = class {
       );
       const nextBtn = carousel.createEl("button", {
         cls: "cards4links-carousel-next",
-        attr: { "aria-label": "Next slide" }
+        attr: { "aria-label": t("aria.nextSlide") }
       });
       nextBtn.appendChild(
         createSvgIcon(
@@ -953,17 +1247,13 @@ var CardProcessor = class {
       })
     ).join("\n");
     try {
-      yaml = (0, import_obsidian5.parseYaml)(normalized);
+      yaml = (0, import_obsidian6.parseYaml)(normalized);
     } catch (error) {
       console.log("Cards4Links YAML parse error:", error);
-      throw new YamlParseError(
-        "Failed to parse YAML. Check debug console for details."
-      );
+      throw new YamlParseError(t("error.yamlParse"));
     }
     if (!yaml || !yaml.url || !yaml.title) {
-      throw new NoRequiredParamsError(
-        "Required params [url, title] not found."
-      );
+      throw new NoRequiredParamsError(t("error.requiredParams"));
     }
     return {
       url: yaml.url,
@@ -987,7 +1277,7 @@ var CardProcessor = class {
     if (needsUpgrade) {
       const upgradeBtn = actionsBar.createEl("button", {
         cls: "cards4links-upgrade-btn clickable-icon",
-        attr: { "aria-label": "Add view field to card" }
+        attr: { "aria-label": t("aria.addViewField") }
       });
       upgradeBtn.appendChild(
         createSvgIcon(
@@ -1015,7 +1305,11 @@ view: ${isGroup ? "carousel" : this.defaultView}`;
       const viewCycle = ["card", "compact", "minimal"];
       const viewBtn = actionsBar.createEl("button", {
         cls: "cards4links-view-btn clickable-icon",
-        attr: { "aria-label": `View: ${view}` }
+        attr: {
+          "aria-label": t("aria.view", {
+            view: this.localizeView(view)
+          })
+        }
       });
       viewBtn.appendChild(
         createSvgIcon(
@@ -1035,11 +1329,11 @@ view: ${isGroup ? "carousel" : this.defaultView}`;
         this.updateCardBlock(cardIndex, "view", next);
       });
     }
-    const label = data.contentType === "video" ? "Watched" : "Read";
+    const label = data.contentType === "video" ? t("label.watched") : t("label.read");
     const watchToggleBtn = actionsBar.createEl("button", {
       cls: "cards4links-watch-toggle clickable-icon",
       attr: {
-        "aria-label": data.watched ? "Mark as Unread" : `Mark as ${label}`
+        "aria-label": data.watched ? t("aria.markUnread") : t("aria.markAs", { label })
       }
     });
     const checkedSvg = createSvgIcon(
@@ -1063,7 +1357,7 @@ view: ${isGroup ? "carousel" : this.defaultView}`;
       watchToggleBtn.appendChild(newWatched ? checkedSvg.cloneNode(true) : uncheckedSvg.cloneNode(true));
       watchToggleBtn.setAttr(
         "aria-label",
-        newWatched ? "Mark as Unread" : `Mark as ${label}`
+        newWatched ? t("aria.markUnread") : t("aria.markAs", { label })
       );
       this.updateCardBlock(cardIndex, "watched", newWatched);
     });
@@ -1111,8 +1405,7 @@ view: ${isGroup ? "carousel" : this.defaultView}`;
     }
     const copyBtn = container.createEl("button", {
       cls: "cards4links-copy-url clickable-icon",
-      attr: { "aria-label": `Copy URL
-${data.url}` }
+      attr: { "aria-label": t("aria.copyUrl", { url: data.url }) }
     });
     copyBtn.appendChild(
       createSvgIcon(
@@ -1124,7 +1417,7 @@ ${data.url}` }
     copyBtn.addEventListener("click", (e) => {
       e.stopPropagation();
       void navigator.clipboard.writeText(data.url);
-      new import_obsidian5.Notice("URL copied to clipboard");
+      new import_obsidian6.Notice(t("notice.urlCopied"));
     });
     if (isGroup) {
       const wrapper = createDiv({ cls: "cards4links-card-wrapper" });
@@ -1185,7 +1478,7 @@ ${data.url}` }
       try {
         const buffer = yield downloadImage(data.image);
         const file = this.app.vault.getAbstractFileByPath(data.imageLocal);
-        if (file instanceof import_obsidian5.TFile) {
+        if (file instanceof import_obsidian6.TFile) {
           yield this.app.vault.modifyBinary(file, buffer);
         } else {
           yield ensureFolder(this.app, folder);
@@ -1196,7 +1489,7 @@ ${data.url}` }
           filename,
           originalUrl: data.image,
           cachedAt: (/* @__PURE__ */ new Date()).toISOString(),
-          size: tf instanceof import_obsidian5.TFile ? tf.stat.size : 0
+          size: tf instanceof import_obsidian6.TFile ? tf.stat.size : 0
         });
       } catch (e) {
         console.log("Cards4Links: TTL refresh failed", e);
@@ -1217,7 +1510,7 @@ ${data.url}` }
     );
     placeholder.createSpan({
       cls: "cards4links-img-placeholder-text",
-      text: "Set image"
+      text: t("placeholder.setImage")
     });
     placeholder.addEventListener("click", (e) => {
       e.preventDefault();
@@ -1242,7 +1535,7 @@ ${data.url}` }
       )
     );
     placeholder.createSpan({
-      text: "Add description"
+      text: t("placeholder.addDescription")
     });
     placeholder.addEventListener("click", (e) => {
       e.preventDefault();
@@ -1270,10 +1563,10 @@ ${field}: ${value}`;
     this.source = newSource;
   }
   replaceBlock(oldSource, newSource) {
-    const markdownView = this.app.workspace.getActiveViewOfType(import_obsidian5.MarkdownView);
+    const markdownView = this.app.workspace.getActiveViewOfType(import_obsidian6.MarkdownView);
     if (!markdownView) {
       console.log("Cards4Links: no active MarkdownView");
-      new import_obsidian5.Notice("Cards4Links: cannot edit in Reading view");
+      new import_obsidian6.Notice(t("notice.cannotEditReading"));
       return;
     }
     const editor = markdownView.editor;
@@ -1305,15 +1598,27 @@ ${finalContent}
         );
       } catch (e) {
         console.log("Cards4Links: failed to update code block", e);
-        new import_obsidian5.Notice("Cards4Links: error updating card state");
+        new import_obsidian6.Notice(t("notice.errorUpdatingCard"));
       }
       break;
     }
   }
   renderError(error) {
     const container = createDiv({ cls: "cards4links-error" });
-    container.setText(`cardlink error: ${error.message}`);
+    container.setText(t("error.cardlink", { message: error.message }));
     return container;
+  }
+  localizeView(view) {
+    switch (view) {
+      case "compact":
+        return t("settings.view.compact");
+      case "minimal":
+        return t("settings.view.minimal");
+      case "carousel":
+        return t("settings.view.carousel");
+      default:
+        return t("settings.view.card");
+    }
   }
   setupCarouselNav(viewport, dotsContainer, prevBtn, nextBtn) {
     const slides = Array.from(viewport.querySelectorAll(".cards4links-carousel-slide"));
@@ -1381,7 +1686,7 @@ ${finalContent}
     requestAnimationFrame(() => updateNav());
   }
 };
-var ImagePickerModal = class extends import_obsidian5.Modal {
+var ImagePickerModal = class extends import_obsidian6.Modal {
   constructor(app, currentUrl, onSubmit) {
     super(app);
     this.currentUrl = currentUrl != null ? currentUrl : "";
@@ -1390,10 +1695,10 @@ var ImagePickerModal = class extends import_obsidian5.Modal {
   onOpen() {
     const { contentEl } = this;
     contentEl.addClass("cards4links-modal");
-    contentEl.createEl("h2", { text: "Set card image" });
+    contentEl.createEl("h2", { text: t("modal.setImageTitle") });
     let imageUrl = this.currentUrl;
     let textInput;
-    new import_obsidian5.Setting(contentEl).setName("Image URL").setDesc("Enter or paste a URL for the card image").addText((text) => {
+    new import_obsidian6.Setting(contentEl).setName(t("modal.imageUrl")).setDesc(t("modal.imageUrlDesc")).addText((text) => {
       text.setValue(imageUrl);
       text.onChange((value) => {
         imageUrl = value;
@@ -1403,7 +1708,7 @@ var ImagePickerModal = class extends import_obsidian5.Modal {
       textInput = text.inputEl;
     }).addExtraButton((btn) => {
       btn.setIcon("clipboard");
-      btn.setTooltip("Paste from clipboard");
+      btn.setTooltip(t("modal.pasteFromClipboard"));
       btn.onClick(() => __async(this, null, function* () {
         try {
           const clipboardText = yield navigator.clipboard.readText();
@@ -1415,8 +1720,8 @@ var ImagePickerModal = class extends import_obsidian5.Modal {
         }
       }));
     });
-    new import_obsidian5.Setting(contentEl).addButton((btn) => {
-      btn.setButtonText("Save");
+    new import_obsidian6.Setting(contentEl).addButton((btn) => {
+      btn.setButtonText(t("ui.save"));
       btn.setCta();
       btn.onClick(() => {
         const url = imageUrl.trim();
@@ -1427,12 +1732,12 @@ var ImagePickerModal = class extends import_obsidian5.Modal {
           this.close();
         };
         img.onerror = () => {
-          new import_obsidian5.Notice("Failed to load image. Please try a different URL.");
+          new import_obsidian6.Notice(t("notice.imageLoadFailed"));
         };
         img.src = url;
       });
     }).addButton((btn) => {
-      btn.setButtonText("Cancel");
+      btn.setButtonText(t("ui.cancel"));
       btn.onClick(() => {
         this.close();
       });
@@ -1442,7 +1747,7 @@ var ImagePickerModal = class extends import_obsidian5.Modal {
     this.contentEl.empty();
   }
 };
-var DescriptionInputModal = class extends import_obsidian5.Modal {
+var DescriptionInputModal = class extends import_obsidian6.Modal {
   constructor(app, onSubmit) {
     super(app);
     this.onSubmit = onSubmit;
@@ -1450,9 +1755,9 @@ var DescriptionInputModal = class extends import_obsidian5.Modal {
   onOpen() {
     const { contentEl } = this;
     contentEl.addClass("cards4links-modal");
-    contentEl.createEl("h2", { text: "Set card description" });
+    contentEl.createEl("h2", { text: t("modal.setDescriptionTitle") });
     let description = "";
-    new import_obsidian5.Setting(contentEl).setName("Description").addTextArea((text) => {
+    new import_obsidian6.Setting(contentEl).setName(t("modal.description")).addTextArea((text) => {
       text.setValue(description);
       text.onChange((value) => {
         description = value;
@@ -1460,15 +1765,15 @@ var DescriptionInputModal = class extends import_obsidian5.Modal {
       text.inputEl.rows = 4;
       text.inputEl.focus();
     });
-    new import_obsidian5.Setting(contentEl).addButton((btn) => {
-      btn.setButtonText("Save");
+    new import_obsidian6.Setting(contentEl).addButton((btn) => {
+      btn.setButtonText(t("ui.save"));
       btn.setCta();
       btn.onClick(() => {
         this.onSubmit(description);
         this.close();
       });
     }).addButton((btn) => {
-      btn.setButtonText("Cancel");
+      btn.setButtonText(t("ui.cancel"));
       btn.onClick(() => {
         this.close();
       });
@@ -1482,36 +1787,15 @@ var DescriptionInputModal = class extends import_obsidian5.Modal {
 // src/main.ts
 var WELCOME_DELAY_MS = 1500;
 var CARD_MILESTONES = [
-  {
-    threshold: 1,
-    message: "First card created! \u{1F389} Enable 'Enhance default paste' in settings to convert URLs automatically on paste."
-  },
-  {
-    threshold: 3,
-    message: "3 cards created! Select 2+ URLs and press Mod+Shift+C to build a carousel."
-  },
-  {
-    threshold: 5,
-    message: "5 cards created! \u{1F389} Thanks for using Cards4Links! https://github.com/Mats324/cards4links"
-  },
-  {
-    threshold: 10,
-    message: "10 cards created! Try a card theme (light/dark) in settings for a different look."
-  },
-  {
-    threshold: 25,
-    message: "25 cards created! Enable the 'watched/read' checkbox to track videos and articles."
-  },
-  {
-    threshold: 50,
-    message: "50 cards created! Explore other card views (compact, minimal) to save space."
-  },
-  {
-    threshold: 100,
-    message: "100 cards created! Turn on 'Cache images locally' to keep card images available offline."
-  }
+  { threshold: 1, key: "milestone.1" },
+  { threshold: 3, key: "milestone.3" },
+  { threshold: 5, key: "milestone.5" },
+  { threshold: 10, key: "milestone.10" },
+  { threshold: 25, key: "milestone.25" },
+  { threshold: 50, key: "milestone.50" },
+  { threshold: 100, key: "milestone.100" }
 ];
-var Cards4Links = class extends import_obsidian6.Plugin {
+var Cards4Links = class extends import_obsidian7.Plugin {
   constructor() {
     super(...arguments);
     this.onPaste = (evt, editor) => __async(this, null, function* () {
@@ -1530,7 +1814,7 @@ var Cards4Links = class extends import_obsidian6.Plugin {
     this.onEditorMenu = (menu) => {
       if (!this.settings.showInMenuItem) return;
       menu.addItem((item) => {
-        item.setTitle("Paste URL and enhance to card link").setIcon("paste").onClick(() => __async(this, null, function* () {
+        item.setTitle(t("command.pasteAndEnhance")).setIcon("paste").onClick(() => __async(this, null, function* () {
           const editor = this.getEditor();
           if (!editor) return;
           yield this.manualPasteAndEnhance(editor);
@@ -1538,14 +1822,14 @@ var Cards4Links = class extends import_obsidian6.Plugin {
       });
       if (!navigator.onLine) return;
       menu.addItem((item) => {
-        item.setTitle("Enhance selected URL to card link").setIcon("link").onClick(() => {
+        item.setTitle(t("command.enhanceSelected")).setIcon("link").onClick(() => {
           const editor = this.getEditor();
           if (!editor) return;
           void this.enhanceSelected(editor);
         });
       });
       menu.addItem((item) => {
-        item.setTitle("Create carousel from selected URLs").setIcon("gallery-horizontal-end").onClick(() => {
+        item.setTitle(t("command.createCarousel")).setIcon("gallery-horizontal-end").onClick(() => {
           const editor = this.getEditor();
           if (!editor) return;
           void this.createCarousel(editor);
@@ -1553,14 +1837,19 @@ var Cards4Links = class extends import_obsidian6.Plugin {
       });
     };
   }
+  setLanguage(lang) {
+    this.settings.language = lang;
+    setLanguage(resolveLang(lang));
+    this.registerCommands();
+  }
   onload() {
     return __async(this, null, function* () {
       yield this.loadSettings();
+      setLanguage(resolveLang(this.settings.language));
+      this.registerCommands();
       if (!this.settings.welcomeShown) {
         window.setTimeout(() => {
-          new import_obsidian6.Notice(
-            "Cards4Links activated! Paste a URL into a note, or select a URL and press Mod+Shift+E."
-          );
+          new import_obsidian7.Notice(t("notice.welcome"));
           this.settings.welcomeShown = true;
           void this.saveSettings();
         }, WELCOME_DELAY_MS);
@@ -1578,53 +1867,6 @@ var Cards4Links = class extends import_obsidian6.Plugin {
         );
         processor.run(source, el);
       });
-      this.addCommand({
-        id: "paste-and-enhance",
-        name: "Paste URL and enhance to card link",
-        editorCallback: (editor) => __async(this, null, function* () {
-          yield this.manualPasteAndEnhance(editor);
-        }),
-        hotkeys: []
-      });
-      this.addCommand({
-        id: "upgrade-old-cards",
-        name: "Add view field to old cardlink cards",
-        editorCallback: (editor) => {
-          this.upgradeOldCards(editor);
-        }
-      });
-      this.addCommand({
-        id: "enhance-selected-url",
-        name: "Enhance selected URL to card link",
-        editorCheckCallback: (checking, editor) => {
-          if (!navigator.onLine) return false;
-          if (checking) return true;
-          void this.enhanceSelected(editor);
-          return;
-        },
-        hotkeys: [{ modifiers: ["Mod", "Shift"], key: "e" }]
-      });
-      this.addCommand({
-        id: "create-carousel",
-        name: "Create carousel from selected URLs",
-        editorCheckCallback: (checking, editor) => {
-          if (!navigator.onLine) return false;
-          if (checking) return true;
-          void this.createCarousel(editor);
-          return;
-        },
-        hotkeys: [{ modifiers: ["Mod", "Shift"], key: "c" }]
-      });
-      this.addCommand({
-        id: "open-settings",
-        name: "Open plugin settings",
-        hotkeys: [{ modifiers: ["Mod", "Shift"], key: "," }],
-        callback: () => {
-          const setting = this.app.setting;
-          setting.open();
-          setting.openTabById("cards-for-links");
-        }
-      });
       this.registerEvent(
         this.app.workspace.on("editor-paste", this.onPaste)
       );
@@ -1632,6 +1874,55 @@ var Cards4Links = class extends import_obsidian6.Plugin {
         this.app.workspace.on("editor-menu", this.onEditorMenu)
       );
       this.addSettingTab(new Cards4LinksSettingTab(this.app, this));
+    });
+  }
+  registerCommands() {
+    this.addCommand({
+      id: "paste-and-enhance",
+      name: t("command.pasteAndEnhance"),
+      editorCallback: (editor) => __async(this, null, function* () {
+        yield this.manualPasteAndEnhance(editor);
+      }),
+      hotkeys: []
+    });
+    this.addCommand({
+      id: "upgrade-old-cards",
+      name: t("command.upgradeOldCards"),
+      editorCallback: (editor) => {
+        this.upgradeOldCards(editor);
+      }
+    });
+    this.addCommand({
+      id: "enhance-selected-url",
+      name: t("command.enhanceSelected"),
+      editorCheckCallback: (checking, editor) => {
+        if (!navigator.onLine) return false;
+        if (checking) return true;
+        void this.enhanceSelected(editor);
+        return;
+      },
+      hotkeys: [{ modifiers: ["Mod", "Shift"], key: "e" }]
+    });
+    this.addCommand({
+      id: "create-carousel",
+      name: t("command.createCarousel"),
+      editorCheckCallback: (checking, editor) => {
+        if (!navigator.onLine) return false;
+        if (checking) return true;
+        void this.createCarousel(editor);
+        return;
+      },
+      hotkeys: [{ modifiers: ["Mod", "Shift"], key: "c" }]
+    });
+    this.addCommand({
+      id: "open-settings",
+      name: t("command.openSettings"),
+      hotkeys: [{ modifiers: ["Mod", "Shift"], key: "," }],
+      callback: () => {
+        const setting = this.app.setting;
+        setting.open();
+        setting.openTabById("cards-for-links");
+      }
     });
   }
   enhanceSelected(editor) {
@@ -1669,7 +1960,7 @@ var Cards4Links = class extends import_obsidian6.Plugin {
         }
       }
       if (urls.length < 2) {
-        new import_obsidian6.Notice("Cards4Links: select 2+ URLs to create a carousel");
+        new import_obsidian7.Notice(t("notice.selectTwoUrls"));
         return;
       }
       yield generator.convertGroup(urls);
@@ -1713,17 +2004,17 @@ ${newContent}\`\`\``
       });
     }
     if (replacements.length === 0) {
-      new import_obsidian6.Notice("Cards4Links: no old cards found");
+      new import_obsidian7.Notice(t("notice.noOldCards"));
       return;
     }
     replacements.reverse();
     for (const r of replacements) {
       editor.replaceRange(r.content, r.start, r.end);
     }
-    new import_obsidian6.Notice(`Cards4Links: updated ${replacements.length} card(s)`);
+    new import_obsidian7.Notice(t("notice.updatedCards", { count: replacements.length }));
   }
   getEditor() {
-    const view = this.app.workspace.getActiveViewOfType(import_obsidian6.MarkdownView);
+    const view = this.app.workspace.getActiveViewOfType(import_obsidian7.MarkdownView);
     return view == null ? void 0 : view.editor;
   }
   makeGenerator(editor) {
@@ -1758,7 +2049,7 @@ ${newContent}\`\`\``
     for (const milestone of CARD_MILESTONES) {
       if (newTotal >= milestone.threshold && !this.settings.milestonesShown.includes(milestone.threshold)) {
         this.settings.milestonesShown.push(milestone.threshold);
-        new import_obsidian6.Notice(milestone.message);
+        new import_obsidian7.Notice(t(milestone.key));
       }
     }
     void this.saveSettings();

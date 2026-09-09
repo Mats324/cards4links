@@ -8,58 +8,38 @@ import { CardGenerator } from "./card-generator";
 import { CardProcessor } from "./card-processor";
 import { isUrl, isImage, isLinkedUrl, extractUrlFromLink } from "./utils";
 import { EditorExtensions } from "./editor-extensions";
+import { LanguageSetting, TKey, resolveLang, setLanguage as applyLang, t } from "./i18n";
 
 const WELCOME_DELAY_MS = 1500;
 
-const CARD_MILESTONES: { threshold: number; message: string }[] = [
-  {
-    threshold: 1,
-    message:
-      "First card created! 🎉 Enable 'Enhance default paste' in settings to convert URLs automatically on paste.",
-  },
-  {
-    threshold: 3,
-    message:
-      "3 cards created! Select 2+ URLs and press Mod+Shift+C to build a carousel.",
-  },
-  {
-    threshold: 5,
-    message:
-      "5 cards created! 🎉 Thanks for using Cards4Links! https://github.com/Mats324/cards4links",
-  },
-  {
-    threshold: 10,
-    message:
-      "10 cards created! Try a card theme (light/dark) in settings for a different look.",
-  },
-  {
-    threshold: 25,
-    message:
-      "25 cards created! Enable the 'watched/read' checkbox to track videos and articles.",
-  },
-  {
-    threshold: 50,
-    message:
-      "50 cards created! Explore other card views (compact, minimal) to save space.",
-  },
-  {
-    threshold: 100,
-    message:
-      "100 cards created! Turn on 'Cache images locally' to keep card images available offline.",
-  },
+const CARD_MILESTONES: { threshold: number; key: TKey }[] = [
+  { threshold: 1, key: "milestone.1" },
+  { threshold: 3, key: "milestone.3" },
+  { threshold: 5, key: "milestone.5" },
+  { threshold: 10, key: "milestone.10" },
+  { threshold: 25, key: "milestone.25" },
+  { threshold: 50, key: "milestone.50" },
+  { threshold: 100, key: "milestone.100" },
 ];
 
 export default class Cards4Links extends Plugin {
   settings!: Cards4LinksSettings;
 
+  setLanguage(lang: LanguageSetting): void {
+    this.settings.language = lang;
+    applyLang(resolveLang(lang));
+    this.registerCommands();
+  }
+
   async onload() {
     await this.loadSettings();
+    applyLang(resolveLang(this.settings.language));
+
+    this.registerCommands();
 
     if (!this.settings.welcomeShown) {
       window.setTimeout(() => {
-        new Notice(
-          "Cards4Links activated! Paste a URL into a note, or select a URL and press Mod+Shift+E."
-        );
+        new Notice(t("notice.welcome"));
         this.settings.welcomeShown = true;
         void this.saveSettings();
       }, WELCOME_DELAY_MS);
@@ -79,9 +59,21 @@ export default class Cards4Links extends Plugin {
       processor.run(source, el);
     });
 
+    this.registerEvent(
+      this.app.workspace.on("editor-paste", this.onPaste)
+    );
+
+    this.registerEvent(
+      this.app.workspace.on("editor-menu", this.onEditorMenu)
+    );
+
+    this.addSettingTab(new Cards4LinksSettingTab(this.app, this));
+  }
+
+  private registerCommands(): void {
     this.addCommand({
       id: "paste-and-enhance",
-      name: "Paste URL and enhance to card link",
+      name: t("command.pasteAndEnhance"),
       editorCallback: async (editor: Editor) => {
         await this.manualPasteAndEnhance(editor);
       },
@@ -90,7 +82,7 @@ export default class Cards4Links extends Plugin {
 
     this.addCommand({
       id: "upgrade-old-cards",
-      name: "Add view field to old cardlink cards",
+      name: t("command.upgradeOldCards"),
       editorCallback: (editor: Editor) => {
         this.upgradeOldCards(editor);
       },
@@ -98,7 +90,7 @@ export default class Cards4Links extends Plugin {
 
     this.addCommand({
       id: "enhance-selected-url",
-      name: "Enhance selected URL to card link",
+      name: t("command.enhanceSelected"),
       editorCheckCallback: (checking: boolean, editor: Editor) => {
         if (!navigator.onLine) return false;
         if (checking) return true;
@@ -110,7 +102,7 @@ export default class Cards4Links extends Plugin {
 
     this.addCommand({
       id: "create-carousel",
-      name: "Create carousel from selected URLs",
+      name: t("command.createCarousel"),
       editorCheckCallback: (checking: boolean, editor: Editor) => {
         if (!navigator.onLine) return false;
         if (checking) return true;
@@ -122,7 +114,7 @@ export default class Cards4Links extends Plugin {
 
     this.addCommand({
       id: "open-settings",
-      name: "Open plugin settings",
+      name: t("command.openSettings"),
       hotkeys: [{ modifiers: ["Mod", "Shift"], key: "," }],
       callback: () => {
         const setting = (this.app as any).setting;
@@ -130,16 +122,6 @@ export default class Cards4Links extends Plugin {
         setting.openTabById("cards-for-links");
       },
     });
-
-    this.registerEvent(
-      this.app.workspace.on("editor-paste", this.onPaste)
-    );
-
-    this.registerEvent(
-      this.app.workspace.on("editor-menu", this.onEditorMenu)
-    );
-
-    this.addSettingTab(new Cards4LinksSettingTab(this.app, this));
   }
 
   private async enhanceSelected(editor: Editor): Promise<void> {
@@ -180,7 +162,7 @@ export default class Cards4Links extends Plugin {
     }
 
     if (urls.length < 2) {
-      new Notice("Cards4Links: select 2+ URLs to create a carousel");
+      new Notice(t("notice.selectTwoUrls"));
       return;
     }
 
@@ -230,7 +212,7 @@ export default class Cards4Links extends Plugin {
 
     menu.addItem((item) => {
       item
-        .setTitle("Paste URL and enhance to card link")
+        .setTitle(t("command.pasteAndEnhance"))
         .setIcon("paste")
         .onClick(async () => {
           const editor = this.getEditor();
@@ -243,7 +225,7 @@ export default class Cards4Links extends Plugin {
 
     menu.addItem((item) => {
       item
-        .setTitle("Enhance selected URL to card link")
+        .setTitle(t("command.enhanceSelected"))
         .setIcon("link")
         .onClick(() => {
           const editor = this.getEditor();
@@ -254,7 +236,7 @@ export default class Cards4Links extends Plugin {
 
     menu.addItem((item) => {
       item
-        .setTitle("Create carousel from selected URLs")
+        .setTitle(t("command.createCarousel"))
         .setIcon("gallery-horizontal-end")
         .onClick(() => {
           const editor = this.getEditor();
@@ -297,7 +279,7 @@ export default class Cards4Links extends Plugin {
     }
 
     if (replacements.length === 0) {
-      new Notice("Cards4Links: no old cards found");
+      new Notice(t("notice.noOldCards"));
       return;
     }
 
@@ -306,7 +288,7 @@ export default class Cards4Links extends Plugin {
       editor.replaceRange(r.content, r.start, r.end);
     }
 
-    new Notice(`Cards4Links: updated ${replacements.length} card(s)`);
+    new Notice(t("notice.updatedCards", { count: replacements.length }));
   }
 
   private getEditor(): Editor | undefined {
@@ -349,7 +331,7 @@ export default class Cards4Links extends Plugin {
         !this.settings.milestonesShown.includes(milestone.threshold)
       ) {
         this.settings.milestonesShown.push(milestone.threshold);
-        new Notice(milestone.message);
+        new Notice(t(milestone.key));
       }
     }
 
