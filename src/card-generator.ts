@@ -17,7 +17,8 @@ export class CardGenerator {
     private cacheImages = false,
     private cacheFolder = "cards4links-cache",
     private cacheLocation: CacheLocation = "vault-absolute",
-    private app?: App
+    private app?: App,
+    private onCardsCreated?: (count: number) => void
   ) {}
 
   async convert(url: string): Promise<void> {
@@ -53,6 +54,7 @@ export class CardGenerator {
     }
 
     this.editor.replaceRange(this.generateCodeBlock(metadata), startPos, endPos);
+    this.onCardsCreated?.(1);
   }
 
   async convertGroup(urls: string[]): Promise<void> {
@@ -112,6 +114,8 @@ export class CardGenerator {
       startPos,
       endPos
     );
+
+    this.onCardsCreated?.(metadataList.length);
 
     new Notice(
       `Cards4Links: created carousel with ${metadataList.length} cards`

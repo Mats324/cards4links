@@ -9,11 +9,61 @@ import { CardProcessor } from "./card-processor";
 import { isUrl, isImage, isLinkedUrl, extractUrlFromLink } from "./utils";
 import { EditorExtensions } from "./editor-extensions";
 
+const WELCOME_DELAY_MS = 1500;
+
+const CARD_MILESTONES: { threshold: number; message: string }[] = [
+  {
+    threshold: 1,
+    message:
+      "First card created! 🎉 Enable 'Enhance default paste' in settings to convert URLs automatically on paste.",
+  },
+  {
+    threshold: 3,
+    message:
+      "3 cards created! Select 2+ URLs and press Mod+Shift+C to build a carousel.",
+  },
+  {
+    threshold: 5,
+    message:
+      "5 cards created! 🎉 Thanks for using Cards4Links! https://github.com/Mats324/cards4links",
+  },
+  {
+    threshold: 10,
+    message:
+      "10 cards created! Try a card theme (light/dark) in settings for a different look.",
+  },
+  {
+    threshold: 25,
+    message:
+      "25 cards created! Enable the 'watched/read' checkbox to track videos and articles.",
+  },
+  {
+    threshold: 50,
+    message:
+      "50 cards created! Explore other card views (compact, minimal) to save space.",
+  },
+  {
+    threshold: 100,
+    message:
+      "100 cards created! Turn on 'Cache images locally' to keep card images available offline.",
+  },
+];
+
 export default class Cards4Links extends Plugin {
   settings!: Cards4LinksSettings;
 
   async onload() {
     await this.loadSettings();
+
+    if (!this.settings.welcomeShown) {
+      window.setTimeout(() => {
+        new Notice(
+          "Cards4Links activated! Paste a URL into a note, or select a URL and press Mod+Shift+E."
+        );
+        this.settings.welcomeShown = true;
+        void this.saveSettings();
+      }, WELCOME_DELAY_MS);
+    }
 
     this.registerMarkdownCodeBlockProcessor("cardlink", (source, el) => {
       const processor = new CardProcessor(
@@ -271,7 +321,8 @@ export default class Cards4Links extends Plugin {
       this.settings.cacheImages,
       this.settings.cacheFolder,
       this.settings.cacheLocation,
-      this.app
+      this.app,
+      (count: number) => this.onCardsCreated(count)
     );
   }
 
@@ -286,5 +337,22 @@ export default class Cards4Links extends Plugin {
 
   async saveSettings() {
     await this.saveData(this.settings);
+  }
+
+  private onCardsCreated(count: number): void {
+    this.settings.cardsCreated += count;
+
+    const newTotal = this.settings.cardsCreated;
+    for (const milestone of CARD_MILESTONES) {
+      if (
+        newTotal >= milestone.threshold &&
+        !this.settings.milestonesShown.includes(milestone.threshold)
+      ) {
+        this.settings.milestonesShown.push(milestone.threshold);
+        new Notice(milestone.message);
+      }
+    }
+
+    void this.saveSettings();
   }
 }

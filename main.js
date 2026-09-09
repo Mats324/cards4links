@@ -345,7 +345,10 @@ var DEFAULT_SETTINGS = {
   cacheImages: false,
   cacheFolder: "cards4links-cache",
   cacheLocation: "vault-absolute",
-  cacheTTL: 30
+  cacheTTL: 30,
+  cardsCreated: 0,
+  welcomeShown: false,
+  milestonesShown: []
 };
 var Cards4LinksSettingTab = class extends import_obsidian3.PluginSettingTab {
   constructor(app, plugin) {
@@ -355,6 +358,21 @@ var Cards4LinksSettingTab = class extends import_obsidian3.PluginSettingTab {
   display() {
     const { containerEl } = this;
     containerEl.empty();
+    const counterSetting = new import_obsidian3.Setting(containerEl).setName("Cards created").setDesc(
+      `Number of cards generated with Cards4Links since the last reset: ${this.plugin.settings.cardsCreated}`
+    );
+    counterSetting.addButton(
+      (btn) => btn.setButtonText("Reset counter").setWarning().onClick(() => __async(this, null, function* () {
+        const confirmed = window.confirm(
+          "Reset the card counter? This will also restart the milestone notifications."
+        );
+        if (!confirmed) return;
+        this.plugin.settings.cardsCreated = 0;
+        this.plugin.settings.milestonesShown = [];
+        yield this.plugin.saveSettings();
+        this.display();
+      }))
+    );
     new import_obsidian3.Setting(containerEl).setName("Enhance default paste").setDesc(
       "Automatically fetch metadata when pasting a URL with the default paste command"
     ).addToggle(
@@ -600,16 +618,18 @@ var EditorExtensions = class {
 
 // src/card-generator.ts
 var CardGenerator = class {
-  constructor(editor, defaultView = "card", cacheImages = false, cacheFolder = "cards4links-cache", cacheLocation = "vault-absolute", app) {
+  constructor(editor, defaultView = "card", cacheImages = false, cacheFolder = "cards4links-cache", cacheLocation = "vault-absolute", app, onCardsCreated) {
     this.editor = editor;
     this.defaultView = defaultView;
     this.cacheImages = cacheImages;
     this.cacheFolder = cacheFolder;
     this.cacheLocation = cacheLocation;
     this.app = app;
+    this.onCardsCreated = onCardsCreated;
   }
   convert(url) {
     return __async(this, null, function* () {
+      var _a;
       const selectedText = this.editor.getSelection();
       const placeholderId = this.randomId();
       const placeholder = `[Fetching Data#${placeholderId}](${url})`;
@@ -636,10 +656,12 @@ var CardGenerator = class {
         return;
       }
       this.editor.replaceRange(this.generateCodeBlock(metadata), startPos, endPos);
+      (_a = this.onCardsCreated) == null ? void 0 : _a.call(this, 1);
     });
   }
   convertGroup(urls) {
     return __async(this, null, function* () {
+      var _a;
       if (urls.length < 2) {
         new import_obsidian4.Notice("Cards4Links: select 2+ URLs to create a carousel");
         return;
@@ -686,6 +708,7 @@ var CardGenerator = class {
         startPos,
         endPos
       );
+      (_a = this.onCardsCreated) == null ? void 0 : _a.call(this, metadataList.length);
       new import_obsidian4.Notice(
         `Cards4Links: created carousel with ${metadataList.length} cards`
       );
@@ -1457,6 +1480,37 @@ var DescriptionInputModal = class extends import_obsidian5.Modal {
 };
 
 // src/main.ts
+var WELCOME_DELAY_MS = 1500;
+var CARD_MILESTONES = [
+  {
+    threshold: 1,
+    message: "First card created! \u{1F389} Enable 'Enhance default paste' in settings to convert URLs automatically on paste."
+  },
+  {
+    threshold: 3,
+    message: "3 cards created! Select 2+ URLs and press Mod+Shift+C to build a carousel."
+  },
+  {
+    threshold: 5,
+    message: "5 cards created! \u{1F389} Thanks for using Cards4Links! https://github.com/Mats324/cards4links"
+  },
+  {
+    threshold: 10,
+    message: "10 cards created! Try a card theme (light/dark) in settings for a different look."
+  },
+  {
+    threshold: 25,
+    message: "25 cards created! Enable the 'watched/read' checkbox to track videos and articles."
+  },
+  {
+    threshold: 50,
+    message: "50 cards created! Explore other card views (compact, minimal) to save space."
+  },
+  {
+    threshold: 100,
+    message: "100 cards created! Turn on 'Cache images locally' to keep card images available offline."
+  }
+];
 var Cards4Links = class extends import_obsidian6.Plugin {
   constructor() {
     super(...arguments);
@@ -1502,6 +1556,15 @@ var Cards4Links = class extends import_obsidian6.Plugin {
   onload() {
     return __async(this, null, function* () {
       yield this.loadSettings();
+      if (!this.settings.welcomeShown) {
+        window.setTimeout(() => {
+          new import_obsidian6.Notice(
+            "Cards4Links activated! Paste a URL into a note, or select a URL and press Mod+Shift+E."
+          );
+          this.settings.welcomeShown = true;
+          void this.saveSettings();
+        }, WELCOME_DELAY_MS);
+      }
       this.registerMarkdownCodeBlockProcessor("cardlink", (source, el) => {
         const processor = new CardProcessor(
           this.app,
@@ -1670,7 +1733,8 @@ ${newContent}\`\`\``
       this.settings.cacheImages,
       this.settings.cacheFolder,
       this.settings.cacheLocation,
-      this.app
+      this.app,
+      (count) => this.onCardsCreated(count)
     );
   }
   loadSettings() {
@@ -1687,5 +1751,16 @@ ${newContent}\`\`\``
     return __async(this, null, function* () {
       yield this.saveData(this.settings);
     });
+  }
+  onCardsCreated(count) {
+    this.settings.cardsCreated += count;
+    const newTotal = this.settings.cardsCreated;
+    for (const milestone of CARD_MILESTONES) {
+      if (newTotal >= milestone.threshold && !this.settings.milestonesShown.includes(milestone.threshold)) {
+        this.settings.milestonesShown.push(milestone.threshold);
+        new import_obsidian6.Notice(milestone.message);
+      }
+    }
+    void this.saveSettings();
   }
 };

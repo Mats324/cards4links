@@ -34,6 +34,9 @@ export interface Cards4LinksSettings {
   cacheFolder: string;
   cacheLocation: CacheLocation;
   cacheTTL: number;
+  cardsCreated: number;
+  welcomeShown: boolean;
+  milestonesShown: number[];
 }
 
 export const DEFAULT_SETTINGS: Cards4LinksSettings = {
@@ -47,6 +50,9 @@ export const DEFAULT_SETTINGS: Cards4LinksSettings = {
   cacheFolder: "cards4links-cache",
   cacheLocation: "vault-absolute",
   cacheTTL: 30,
+  cardsCreated: 0,
+  welcomeShown: false,
+  milestonesShown: [],
 };
 
 export class Cards4LinksSettingTab extends PluginSettingTab {
@@ -60,6 +66,28 @@ export class Cards4LinksSettingTab extends PluginSettingTab {
   display(): void {
     const { containerEl } = this;
     containerEl.empty();
+
+    const counterSetting = new Setting(containerEl)
+      .setName("Cards created")
+      .setDesc(
+        `Number of cards generated with Cards4Links since the last reset: ${this.plugin.settings.cardsCreated}`
+      );
+
+    counterSetting.addButton((btn) =>
+      btn
+        .setButtonText("Reset counter")
+        .setWarning()
+        .onClick(async () => {
+          const confirmed = window.confirm(
+            "Reset the card counter? This will also restart the milestone notifications."
+          );
+          if (!confirmed) return;
+          this.plugin.settings.cardsCreated = 0;
+          this.plugin.settings.milestonesShown = [];
+          await this.plugin.saveSettings();
+          this.display();
+        })
+    );
 
     new Setting(containerEl)
       .setName("Enhance default paste")
