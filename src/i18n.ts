@@ -136,6 +136,11 @@ const en = {
   "settings.manageCacheDesc": "View cache contents and clean up files",
   "settings.manageCacheButton": "Manage cache…",
 
+  "settings.section.integration": "Paste & Integration",
+  "settings.section.style": "Card Style",
+  "settings.section.cache": "Image Cache",
+  "settings.section.plugin": "Plugin",
+
   "cache.title": "Cache Cleanup",
   "cache.scanning": "Scanning cache…",
   "cache.summary": "{count} files — {size}",
@@ -296,6 +301,11 @@ const it: Translations = {
   "settings.manageCache": "Gestisci cache",
   "settings.manageCacheDesc": "Visualizza il contenuto della cache e ripulisci i file",
   "settings.manageCacheButton": "Gestisci cache…",
+
+  "settings.section.integration": "Incolla e Integrazione",
+  "settings.section.style": "Stile Card",
+  "settings.section.cache": "Cache Immagini",
+  "settings.section.plugin": "Plugin",
 
   "cache.title": "Pulizia cache",
   "cache.scanning": "Analisi cache in corso…",

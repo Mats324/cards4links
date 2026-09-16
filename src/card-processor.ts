@@ -63,7 +63,8 @@ export class CardProcessor {
     private cacheImages = false,
     private cacheFolder = "cards4links-cache",
     private cacheLocation: CacheLocation = "vault-absolute",
-    private cacheTTL = 30
+    private cacheTTL = 30,
+    private enableWatched = true
   ) {}
 
   run(source: string, el: HTMLElement): void {
@@ -267,36 +268,38 @@ export class CardProcessor {
       });
     }
 
-    const label = data.contentType === "video" ? t("label.watched") : t("label.read");
-    const watchToggleBtn = actionsBar.createEl("button", {
-      cls: "cards4links-watch-toggle clickable-icon",
-      attr: {
-        "aria-label": data.watched
-          ? t("aria.markUnread")
-          : t("aria.markAs", { label }),
-      },
-    });
-    const checkedSvg = createSvgIcon("0 0 24 24", 14,
-      ["circle", { cx: "12", cy: "12", r: "10", fill: "none", stroke: "currentColor", "stroke-width": "2" }],
-      ["path", { d: "M8 12l3 3 5-5", fill: "none", stroke: "currentColor", "stroke-width": "2" }]
-    );
-    const uncheckedSvg = createSvgIcon("0 0 24 24", 14,
-      ["circle", { cx: "12", cy: "12", r: "10", fill: "none", stroke: "currentColor", "stroke-width": "2" }]
-    );
-    watchToggleBtn.appendChild(data.watched ? checkedSvg.cloneNode(true) : uncheckedSvg.cloneNode(true));
-    watchToggleBtn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      const currentlyWatched = container.dataset.watched === "true";
-      const newWatched = !currentlyWatched;
-      container.dataset.watched = newWatched ? "true" : "false";
-      watchToggleBtn.empty();
-      watchToggleBtn.appendChild(newWatched ? checkedSvg.cloneNode(true) : uncheckedSvg.cloneNode(true));
-      watchToggleBtn.setAttr(
-        "aria-label",
-        newWatched ? t("aria.markUnread") : t("aria.markAs", { label })
+    if (this.enableWatched) {
+      const label = data.contentType === "video" ? t("label.watched") : t("label.read");
+      const watchToggleBtn = actionsBar.createEl("button", {
+        cls: "cards4links-watch-toggle clickable-icon",
+        attr: {
+          "aria-label": data.watched
+            ? t("aria.markUnread")
+            : t("aria.markAs", { label }),
+        },
+      });
+      const checkedSvg = createSvgIcon("0 0 24 24", 14,
+        ["circle", { cx: "12", cy: "12", r: "10", fill: "none", stroke: "currentColor", "stroke-width": "2" }],
+        ["path", { d: "M8 12l3 3 5-5", fill: "none", stroke: "currentColor", "stroke-width": "2" }]
       );
-      this.updateCardBlock(cardIndex, "watched", newWatched);
-    });
+      const uncheckedSvg = createSvgIcon("0 0 24 24", 14,
+        ["circle", { cx: "12", cy: "12", r: "10", fill: "none", stroke: "currentColor", "stroke-width": "2" }]
+      );
+      watchToggleBtn.appendChild(data.watched ? checkedSvg.cloneNode(true) : uncheckedSvg.cloneNode(true));
+      watchToggleBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const currentlyWatched = container.dataset.watched === "true";
+        const newWatched = !currentlyWatched;
+        container.dataset.watched = newWatched ? "true" : "false";
+        watchToggleBtn.empty();
+        watchToggleBtn.appendChild(newWatched ? checkedSvg.cloneNode(true) : uncheckedSvg.cloneNode(true));
+        watchToggleBtn.setAttr(
+          "aria-label",
+          newWatched ? t("aria.markUnread") : t("aria.markAs", { label })
+        );
+        this.updateCardBlock(cardIndex, "watched", newWatched);
+      });
+    }
 
     // Container
     const container = createDiv({

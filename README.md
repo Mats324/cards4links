@@ -75,20 +75,40 @@ Select 2+ URLs and run **"Create carousel from selected URLs"** (`Ctrl+Shift+C`)
 
 ## Settings
 
+Settings are organized into four sections.
+
+### Paste & Integration
+
 | Setting | Description |
 |---------|-------------|
-| Language | Auto (follows Obsidian) / English / Italiano |
-| Cards Created | Total cards generated since last reset (with Reset button) |
 | Enhance Default Paste | Auto-fetch metadata when pasting a URL |
-| Thumbnail Position | Right / Left / No thumbnail |
 | Show Commands in Menu | Show in right-click context menu |
-| Enable Watched/Read | Track watched/read status on cards |
+
+### Card Style
+
+| Setting | Description |
+|---------|-------------|
 | Default Card View | Default view: Card / Compact / Minimal |
 | Card Theme | Default / Light / Dark |
+| Thumbnail Position | Right / Left / No thumbnail |
+| Enable Watched/Read | Track watched/read status on cards (enabled by default) |
+
+### Image Cache
+
+| Setting | Description |
+|---------|-------------|
 | Cache Images Locally | Download card images to vault for offline access |
 | Cache Storage | Global folder / Per note |
 | Cache Folder Name | Folder path for cached images (global mode) |
 | Cache TTL | How long before re-downloading (7–180 days / Never) |
+| Manage Cache | Browse and delete cached images from a dedicated modal |
+
+### Plugin
+
+| Setting | Description |
+|---------|-------------|
+| Language | 🌐 Auto (follows Obsidian) / 🇬🇧 English / 🇮🇹 Italiano |
+| Cards Created | Total cards generated since last reset (with Reset button) |
 
 ## ❤️ Support
 

@@ -39,6 +39,7 @@ export interface Cards4LinksSettings {
   cardsCreated: number;
   welcomeShown: boolean;
   milestonesShown: number[];
+  enableWatchedMigrated: boolean;
 }
 
 export const DEFAULT_SETTINGS: Cards4LinksSettings = {
@@ -46,7 +47,7 @@ export const DEFAULT_SETTINGS: Cards4LinksSettings = {
   enhanceDefaultPaste: false,
   thumbnailPosition: "right",
   showInMenuItem: true,
-  enableWatched: false,
+  enableWatched: true,
   defaultView: "card",
   theme: "default",
   cacheImages: false,
@@ -56,6 +57,7 @@ export const DEFAULT_SETTINGS: Cards4LinksSettings = {
   cardsCreated: 0,
   welcomeShown: false,
   milestonesShown: [],
+  enableWatchedMigrated: false,
 };
 
 export class Cards4LinksSettingTab extends PluginSettingTab {
@@ -71,43 +73,8 @@ export class Cards4LinksSettingTab extends PluginSettingTab {
     containerEl.empty();
 
     new Setting(containerEl)
-      .setName(t("settings.language"))
-      .setDesc(t("settings.languageDesc"))
-      .addDropdown((dropdown) =>
-        dropdown
-          .addOption("auto", t("settings.language.auto"))
-          .addOption("en", t("settings.language.en"))
-          .addOption("it", t("settings.language.it"))
-          .setValue(this.plugin.settings.language)
-          .onChange(async (value) => {
-            if (value !== "auto" && value !== "en" && value !== "it") return;
-            this.plugin.setLanguage(value);
-            await this.plugin.saveSettings();
-            this.display();
-          })
-      );
-
-    const counterSetting = new Setting(containerEl)
-      .setName(t("settings.cardsCreated"))
-      .setDesc(
-        t("settings.cardsCreatedDesc", {
-          count: this.plugin.settings.cardsCreated,
-        })
-      );
-
-    counterSetting.addButton((btn) =>
-      btn
-        .setButtonText(t("settings.resetCounter"))
-        .setWarning()
-        .onClick(async () => {
-          const confirmed = window.confirm(t("settings.resetCounterConfirm"));
-          if (!confirmed) return;
-          this.plugin.settings.cardsCreated = 0;
-          this.plugin.settings.milestonesShown = [];
-          await this.plugin.saveSettings();
-          this.display();
-        })
-    );
+      .setName(t("settings.section.integration"))
+      .setHeading();
 
     new Setting(containerEl)
       .setName(t("settings.enhancePaste"))
@@ -117,22 +84,6 @@ export class Cards4LinksSettingTab extends PluginSettingTab {
           .setValue(this.plugin.settings.enhanceDefaultPaste)
           .onChange(async (value) => {
             this.plugin.settings.enhanceDefaultPaste = value;
-            await this.plugin.saveSettings();
-          })
-      );
-
-    new Setting(containerEl)
-      .setName(t("settings.thumbnailPosition"))
-      .setDesc(t("settings.thumbnailPositionDesc"))
-      .addDropdown((dropdown) =>
-        dropdown
-          .addOption("right", t("settings.thumbnail.right"))
-          .addOption("left", t("settings.thumbnail.left"))
-          .addOption("none", t("settings.thumbnail.none"))
-          .setValue(this.plugin.settings.thumbnailPosition)
-          .onChange(async (value) => {
-            if (!isThumbnailPosition(value)) return;
-            this.plugin.settings.thumbnailPosition = value;
             await this.plugin.saveSettings();
           })
       );
@@ -150,16 +101,8 @@ export class Cards4LinksSettingTab extends PluginSettingTab {
       );
 
     new Setting(containerEl)
-      .setName(t("settings.enableWatched"))
-      .setDesc(t("settings.enableWatchedDesc"))
-      .addToggle((toggle) =>
-        toggle
-          .setValue(this.plugin.settings.enableWatched)
-          .onChange(async (value) => {
-            this.plugin.settings.enableWatched = value;
-            await this.plugin.saveSettings();
-          })
-      );
+      .setName(t("settings.section.style"))
+      .setHeading();
 
     new Setting(containerEl)
       .setName(t("settings.defaultView"))
@@ -192,6 +135,38 @@ export class Cards4LinksSettingTab extends PluginSettingTab {
             await this.plugin.saveSettings();
           })
       );
+
+    new Setting(containerEl)
+      .setName(t("settings.thumbnailPosition"))
+      .setDesc(t("settings.thumbnailPositionDesc"))
+      .addDropdown((dropdown) =>
+        dropdown
+          .addOption("right", t("settings.thumbnail.right"))
+          .addOption("left", t("settings.thumbnail.left"))
+          .addOption("none", t("settings.thumbnail.none"))
+          .setValue(this.plugin.settings.thumbnailPosition)
+          .onChange(async (value) => {
+            if (!isThumbnailPosition(value)) return;
+            this.plugin.settings.thumbnailPosition = value;
+            await this.plugin.saveSettings();
+          })
+      );
+
+    new Setting(containerEl)
+      .setName(t("settings.enableWatched"))
+      .setDesc(t("settings.enableWatchedDesc"))
+      .addToggle((toggle) =>
+        toggle
+          .setValue(this.plugin.settings.enableWatched)
+          .onChange(async (value) => {
+            this.plugin.settings.enableWatched = value;
+            await this.plugin.saveSettings();
+          })
+      );
+
+    new Setting(containerEl)
+      .setName(t("settings.section.cache"))
+      .setHeading();
 
     new Setting(containerEl)
       .setName(t("settings.cacheImages"))
@@ -271,5 +246,48 @@ export class Cards4LinksSettingTab extends PluginSettingTab {
             })
         );
     }
+
+    new Setting(containerEl)
+      .setName(t("settings.section.plugin"))
+      .setHeading();
+
+    new Setting(containerEl)
+      .setName(t("settings.language"))
+      .setDesc(t("settings.languageDesc"))
+      .addDropdown((dropdown) =>
+        dropdown
+          .addOption("auto", `🌐 ${t("settings.language.auto")}`)
+          .addOption("en", `🇬🇧 ${t("settings.language.en")}`)
+          .addOption("it", `🇮🇹 ${t("settings.language.it")}`)
+          .setValue(this.plugin.settings.language)
+          .onChange(async (value) => {
+            if (value !== "auto" && value !== "en" && value !== "it") return;
+            this.plugin.setLanguage(value);
+            await this.plugin.saveSettings();
+            this.display();
+          })
+      );
+
+    const counterSetting = new Setting(containerEl)
+      .setName(t("settings.cardsCreated"))
+      .setDesc(
+        t("settings.cardsCreatedDesc", {
+          count: this.plugin.settings.cardsCreated,
+        })
+      );
+
+    counterSetting.addButton((btn) =>
+      btn
+        .setButtonText(t("settings.resetCounter"))
+        .setWarning()
+        .onClick(async () => {
+          const confirmed = window.confirm(t("settings.resetCounterConfirm"));
+          if (!confirmed) return;
+          this.plugin.settings.cardsCreated = 0;
+          this.plugin.settings.milestonesShown = [];
+          await this.plugin.saveSettings();
+          this.display();
+        })
+    );
   }
 }

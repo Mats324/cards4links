@@ -54,7 +54,8 @@ export default class Cards4Links extends Plugin {
         this.settings.cacheImages,
         this.settings.cacheFolder,
         this.settings.cacheLocation,
-        this.settings.cacheTTL
+        this.settings.cacheTTL,
+        this.settings.enableWatched
       );
       processor.run(source, el);
     });
@@ -315,6 +316,12 @@ export default class Cards4Links extends Plugin {
       DEFAULT_SETTINGS,
       data
     );
+
+    if (!this.settings.enableWatchedMigrated) {
+      this.settings.enableWatched = true;
+      this.settings.enableWatchedMigrated = true;
+      await this.saveSettings();
+    }
   }
 
   async saveSettings() {

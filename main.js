@@ -161,6 +161,10 @@ var en = {
   "settings.manageCache": "Manage cache",
   "settings.manageCacheDesc": "View cache contents and clean up files",
   "settings.manageCacheButton": "Manage cache\u2026",
+  "settings.section.integration": "Paste & Integration",
+  "settings.section.style": "Card Style",
+  "settings.section.cache": "Image Cache",
+  "settings.section.plugin": "Plugin",
   "cache.title": "Cache Cleanup",
   "cache.scanning": "Scanning cache\u2026",
   "cache.summary": "{count} files \u2014 {size}",
@@ -287,6 +291,10 @@ var it = {
   "settings.manageCache": "Gestisci cache",
   "settings.manageCacheDesc": "Visualizza il contenuto della cache e ripulisci i file",
   "settings.manageCacheButton": "Gestisci cache\u2026",
+  "settings.section.integration": "Incolla e Integrazione",
+  "settings.section.style": "Stile Card",
+  "settings.section.cache": "Cache Immagini",
+  "settings.section.plugin": "Plugin",
   "cache.title": "Pulizia cache",
   "cache.scanning": "Analisi cache in corso\u2026",
   "cache.summary": "{count} file \u2014 {size}",
@@ -627,7 +635,7 @@ var DEFAULT_SETTINGS = {
   enhanceDefaultPaste: false,
   thumbnailPosition: "right",
   showInMenuItem: true,
-  enableWatched: false,
+  enableWatched: true,
   defaultView: "card",
   theme: "default",
   cacheImages: false,
@@ -636,7 +644,8 @@ var DEFAULT_SETTINGS = {
   cacheTTL: 30,
   cardsCreated: 0,
   welcomeShown: false,
-  milestonesShown: []
+  milestonesShown: [],
+  enableWatchedMigrated: false
 };
 var Cards4LinksSettingTab = class extends import_obsidian4.PluginSettingTab {
   constructor(app, plugin) {
@@ -646,39 +655,10 @@ var Cards4LinksSettingTab = class extends import_obsidian4.PluginSettingTab {
   display() {
     const { containerEl } = this;
     containerEl.empty();
-    new import_obsidian4.Setting(containerEl).setName(t("settings.language")).setDesc(t("settings.languageDesc")).addDropdown(
-      (dropdown) => dropdown.addOption("auto", t("settings.language.auto")).addOption("en", t("settings.language.en")).addOption("it", t("settings.language.it")).setValue(this.plugin.settings.language).onChange((value) => __async(this, null, function* () {
-        if (value !== "auto" && value !== "en" && value !== "it") return;
-        this.plugin.setLanguage(value);
-        yield this.plugin.saveSettings();
-        this.display();
-      }))
-    );
-    const counterSetting = new import_obsidian4.Setting(containerEl).setName(t("settings.cardsCreated")).setDesc(
-      t("settings.cardsCreatedDesc", {
-        count: this.plugin.settings.cardsCreated
-      })
-    );
-    counterSetting.addButton(
-      (btn) => btn.setButtonText(t("settings.resetCounter")).setWarning().onClick(() => __async(this, null, function* () {
-        const confirmed = window.confirm(t("settings.resetCounterConfirm"));
-        if (!confirmed) return;
-        this.plugin.settings.cardsCreated = 0;
-        this.plugin.settings.milestonesShown = [];
-        yield this.plugin.saveSettings();
-        this.display();
-      }))
-    );
+    new import_obsidian4.Setting(containerEl).setName(t("settings.section.integration")).setHeading();
     new import_obsidian4.Setting(containerEl).setName(t("settings.enhancePaste")).setDesc(t("settings.enhancePasteDesc")).addToggle(
       (toggle) => toggle.setValue(this.plugin.settings.enhanceDefaultPaste).onChange((value) => __async(this, null, function* () {
         this.plugin.settings.enhanceDefaultPaste = value;
-        yield this.plugin.saveSettings();
-      }))
-    );
-    new import_obsidian4.Setting(containerEl).setName(t("settings.thumbnailPosition")).setDesc(t("settings.thumbnailPositionDesc")).addDropdown(
-      (dropdown) => dropdown.addOption("right", t("settings.thumbnail.right")).addOption("left", t("settings.thumbnail.left")).addOption("none", t("settings.thumbnail.none")).setValue(this.plugin.settings.thumbnailPosition).onChange((value) => __async(this, null, function* () {
-        if (!isThumbnailPosition(value)) return;
-        this.plugin.settings.thumbnailPosition = value;
         yield this.plugin.saveSettings();
       }))
     );
@@ -688,12 +668,7 @@ var Cards4LinksSettingTab = class extends import_obsidian4.PluginSettingTab {
         yield this.plugin.saveSettings();
       }))
     );
-    new import_obsidian4.Setting(containerEl).setName(t("settings.enableWatched")).setDesc(t("settings.enableWatchedDesc")).addToggle(
-      (toggle) => toggle.setValue(this.plugin.settings.enableWatched).onChange((value) => __async(this, null, function* () {
-        this.plugin.settings.enableWatched = value;
-        yield this.plugin.saveSettings();
-      }))
-    );
+    new import_obsidian4.Setting(containerEl).setName(t("settings.section.style")).setHeading();
     new import_obsidian4.Setting(containerEl).setName(t("settings.defaultView")).setDesc(t("settings.defaultViewDesc")).addDropdown(
       (dropdown) => dropdown.addOption("card", t("settings.view.card")).addOption("compact", t("settings.view.compact")).addOption("minimal", t("settings.view.minimal")).setValue(this.plugin.settings.defaultView).onChange((value) => __async(this, null, function* () {
         if (!isCardView(value)) return;
@@ -708,6 +683,20 @@ var Cards4LinksSettingTab = class extends import_obsidian4.PluginSettingTab {
         yield this.plugin.saveSettings();
       }))
     );
+    new import_obsidian4.Setting(containerEl).setName(t("settings.thumbnailPosition")).setDesc(t("settings.thumbnailPositionDesc")).addDropdown(
+      (dropdown) => dropdown.addOption("right", t("settings.thumbnail.right")).addOption("left", t("settings.thumbnail.left")).addOption("none", t("settings.thumbnail.none")).setValue(this.plugin.settings.thumbnailPosition).onChange((value) => __async(this, null, function* () {
+        if (!isThumbnailPosition(value)) return;
+        this.plugin.settings.thumbnailPosition = value;
+        yield this.plugin.saveSettings();
+      }))
+    );
+    new import_obsidian4.Setting(containerEl).setName(t("settings.enableWatched")).setDesc(t("settings.enableWatchedDesc")).addToggle(
+      (toggle) => toggle.setValue(this.plugin.settings.enableWatched).onChange((value) => __async(this, null, function* () {
+        this.plugin.settings.enableWatched = value;
+        yield this.plugin.saveSettings();
+      }))
+    );
+    new import_obsidian4.Setting(containerEl).setName(t("settings.section.cache")).setHeading();
     new import_obsidian4.Setting(containerEl).setName(t("settings.cacheImages")).setDesc(t("settings.cacheImagesDesc")).addToggle(
       (toggle) => toggle.setValue(this.plugin.settings.cacheImages).onChange((value) => __async(this, null, function* () {
         this.plugin.settings.cacheImages = value;
@@ -749,6 +738,30 @@ var Cards4LinksSettingTab = class extends import_obsidian4.PluginSettingTab {
         })
       );
     }
+    new import_obsidian4.Setting(containerEl).setName(t("settings.section.plugin")).setHeading();
+    new import_obsidian4.Setting(containerEl).setName(t("settings.language")).setDesc(t("settings.languageDesc")).addDropdown(
+      (dropdown) => dropdown.addOption("auto", `\u{1F310} ${t("settings.language.auto")}`).addOption("en", `\u{1F1EC}\u{1F1E7} ${t("settings.language.en")}`).addOption("it", `\u{1F1EE}\u{1F1F9} ${t("settings.language.it")}`).setValue(this.plugin.settings.language).onChange((value) => __async(this, null, function* () {
+        if (value !== "auto" && value !== "en" && value !== "it") return;
+        this.plugin.setLanguage(value);
+        yield this.plugin.saveSettings();
+        this.display();
+      }))
+    );
+    const counterSetting = new import_obsidian4.Setting(containerEl).setName(t("settings.cardsCreated")).setDesc(
+      t("settings.cardsCreatedDesc", {
+        count: this.plugin.settings.cardsCreated
+      })
+    );
+    counterSetting.addButton(
+      (btn) => btn.setButtonText(t("settings.resetCounter")).setWarning().onClick(() => __async(this, null, function* () {
+        const confirmed = window.confirm(t("settings.resetCounterConfirm"));
+        if (!confirmed) return;
+        this.plugin.settings.cardsCreated = 0;
+        this.plugin.settings.milestonesShown = [];
+        yield this.plugin.saveSettings();
+        this.display();
+      }))
+    );
   }
 };
 
@@ -1136,7 +1149,7 @@ var NoRequiredParamsError = class extends Error {
   }
 };
 var CardProcessor = class {
-  constructor(app, thumbnailPosition = "right", defaultView = "card", theme = "default", cacheImages = false, cacheFolder = "cards4links-cache", cacheLocation = "vault-absolute", cacheTTL = 30) {
+  constructor(app, thumbnailPosition = "right", defaultView = "card", theme = "default", cacheImages = false, cacheFolder = "cards4links-cache", cacheLocation = "vault-absolute", cacheTTL = 30, enableWatched = true) {
     this.app = app;
     this.thumbnailPosition = thumbnailPosition;
     this.defaultView = defaultView;
@@ -1145,6 +1158,7 @@ var CardProcessor = class {
     this.cacheFolder = cacheFolder;
     this.cacheLocation = cacheLocation;
     this.cacheTTL = cacheTTL;
+    this.enableWatched = enableWatched;
     this.source = "";
     this.sections = [];
   }
@@ -1329,38 +1343,40 @@ view: ${isGroup ? "carousel" : this.defaultView}`;
         this.updateCardBlock(cardIndex, "view", next);
       });
     }
-    const label = data.contentType === "video" ? t("label.watched") : t("label.read");
-    const watchToggleBtn = actionsBar.createEl("button", {
-      cls: "cards4links-watch-toggle clickable-icon",
-      attr: {
-        "aria-label": data.watched ? t("aria.markUnread") : t("aria.markAs", { label })
-      }
-    });
-    const checkedSvg = createSvgIcon(
-      "0 0 24 24",
-      14,
-      ["circle", { cx: "12", cy: "12", r: "10", fill: "none", stroke: "currentColor", "stroke-width": "2" }],
-      ["path", { d: "M8 12l3 3 5-5", fill: "none", stroke: "currentColor", "stroke-width": "2" }]
-    );
-    const uncheckedSvg = createSvgIcon(
-      "0 0 24 24",
-      14,
-      ["circle", { cx: "12", cy: "12", r: "10", fill: "none", stroke: "currentColor", "stroke-width": "2" }]
-    );
-    watchToggleBtn.appendChild(data.watched ? checkedSvg.cloneNode(true) : uncheckedSvg.cloneNode(true));
-    watchToggleBtn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      const currentlyWatched = container.dataset.watched === "true";
-      const newWatched = !currentlyWatched;
-      container.dataset.watched = newWatched ? "true" : "false";
-      watchToggleBtn.empty();
-      watchToggleBtn.appendChild(newWatched ? checkedSvg.cloneNode(true) : uncheckedSvg.cloneNode(true));
-      watchToggleBtn.setAttr(
-        "aria-label",
-        newWatched ? t("aria.markUnread") : t("aria.markAs", { label })
+    if (this.enableWatched) {
+      const label = data.contentType === "video" ? t("label.watched") : t("label.read");
+      const watchToggleBtn = actionsBar.createEl("button", {
+        cls: "cards4links-watch-toggle clickable-icon",
+        attr: {
+          "aria-label": data.watched ? t("aria.markUnread") : t("aria.markAs", { label })
+        }
+      });
+      const checkedSvg = createSvgIcon(
+        "0 0 24 24",
+        14,
+        ["circle", { cx: "12", cy: "12", r: "10", fill: "none", stroke: "currentColor", "stroke-width": "2" }],
+        ["path", { d: "M8 12l3 3 5-5", fill: "none", stroke: "currentColor", "stroke-width": "2" }]
       );
-      this.updateCardBlock(cardIndex, "watched", newWatched);
-    });
+      const uncheckedSvg = createSvgIcon(
+        "0 0 24 24",
+        14,
+        ["circle", { cx: "12", cy: "12", r: "10", fill: "none", stroke: "currentColor", "stroke-width": "2" }]
+      );
+      watchToggleBtn.appendChild(data.watched ? checkedSvg.cloneNode(true) : uncheckedSvg.cloneNode(true));
+      watchToggleBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const currentlyWatched = container.dataset.watched === "true";
+        const newWatched = !currentlyWatched;
+        container.dataset.watched = newWatched ? "true" : "false";
+        watchToggleBtn.empty();
+        watchToggleBtn.appendChild(newWatched ? checkedSvg.cloneNode(true) : uncheckedSvg.cloneNode(true));
+        watchToggleBtn.setAttr(
+          "aria-label",
+          newWatched ? t("aria.markUnread") : t("aria.markAs", { label })
+        );
+        this.updateCardBlock(cardIndex, "watched", newWatched);
+      });
+    }
     const container = createDiv({
       cls: "cards4links-container",
       attr: {
@@ -1863,7 +1879,8 @@ var Cards4Links = class extends import_obsidian7.Plugin {
           this.settings.cacheImages,
           this.settings.cacheFolder,
           this.settings.cacheLocation,
-          this.settings.cacheTTL
+          this.settings.cacheTTL,
+          this.settings.enableWatched
         );
         processor.run(source, el);
       });
@@ -2036,6 +2053,11 @@ ${newContent}\`\`\``
         DEFAULT_SETTINGS,
         data
       );
+      if (!this.settings.enableWatchedMigrated) {
+        this.settings.enableWatched = true;
+        this.settings.enableWatchedMigrated = true;
+        yield this.saveSettings();
+      }
     });
   }
   saveSettings() {
