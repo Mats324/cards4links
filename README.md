@@ -26,6 +26,7 @@ Right-click in the editor → **"Paste URL and enhance to card link"**.
 
 - **Paste & Enhance** — Paste a URL and instantly get a styled card
     - **Context Menu** — Right-click any URL to enhance it
+- **Enhance on Hover** — Hover a URL in the editor and click "Convert to card"
 - **Rich Metadata** — Auto-fetches Open Graph data (title, description, image)
 - **Multiple Views** — Choose between Card, Compact, and Minimal layouts
 - **Watched/Read Tracking** — Mark video cards as "Watched" and articles as "Read"
@@ -83,6 +84,7 @@ Settings are organized into four sections.
 |---------|-------------|
 | Enhance Default Paste | Auto-fetch metadata when pasting a URL |
 | Show Commands in Menu | Show in right-click context menu |
+| Enhance on Hover | Hover a URL to show a "Convert to card" button |
 
 ### Card Style
 

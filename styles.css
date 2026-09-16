@@ -271,6 +271,36 @@
   color: var(--text-warning) !important;
 }
 
+/* Hover-to-convert tooltip */
+.cards4links-hover-tooltip {
+  padding: var(--size-2-1);
+  border-radius: var(--radius-m);
+  background: var(--background-primary);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  border: 1px solid var(--background-modifier-border);
+}
+
+.cards4links-hover-convert {
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  padding: var(--size-2-1) var(--size-2-2);
+  border-radius: var(--radius-s);
+  font-size: var(--font-ui-small);
+  cursor: pointer;
+  transition: background-color 150ms ease, color 150ms ease;
+}
+
+.cards4links-hover-convert:hover {
+  color: var(--interactive-accent);
+  background-color: var(--background-modifier-hover);
+}
+
+.cards4links-hover-convert:focus-visible {
+  outline: 2px solid var(--interactive-accent);
+  outline-offset: 2px;
+}
+
 /* Focus visible for accessibility */
 .cards4links-card:focus-visible,
 .cards4links-actions-bar .clickable-icon:focus-visible {

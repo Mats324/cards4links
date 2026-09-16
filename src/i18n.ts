@@ -93,6 +93,10 @@ const en = {
   "settings.enhancePaste": "Enhance default paste",
   "settings.enhancePasteDesc":
     "Automatically fetch metadata when pasting a URL with the default paste command",
+  "settings.hoverEnhance": "Enhance on hover",
+  "settings.hoverEnhanceDesc":
+    "Hover over a URL in the editor to show a button that converts it to a card",
+  "hover.convertButton": "Convert to card",
   "settings.thumbnailPosition": "Thumbnail position",
   "settings.thumbnailPositionDesc": "Where to show the thumbnail image in the card",
   "settings.thumbnail.right": "Right",
@@ -259,6 +263,10 @@ const it: Translations = {
   "settings.enhancePaste": "Migliora incolla predefinito",
   "settings.enhancePasteDesc":
     "Recupera automaticamente i metadati quando incolli un URL con il comando di incolla predefinito",
+  "settings.hoverEnhance": "Migliora al passaggio del mouse",
+  "settings.hoverEnhanceDesc":
+    "Passa il mouse su un URL nell'editor per mostrare un pulsante che lo converte in card",
+  "hover.convertButton": "Converti in card",
   "settings.thumbnailPosition": "Posizione anteprima",
   "settings.thumbnailPositionDesc": "Dove mostrare l'immagine di anteprima nella card",
   "settings.thumbnail.right": "Destra",

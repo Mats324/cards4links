@@ -123,6 +123,9 @@ var en = {
   "settings.resetCounterConfirm": "Reset the card counter? This will also restart the milestone notifications.",
   "settings.enhancePaste": "Enhance default paste",
   "settings.enhancePasteDesc": "Automatically fetch metadata when pasting a URL with the default paste command",
+  "settings.hoverEnhance": "Enhance on hover",
+  "settings.hoverEnhanceDesc": "Hover over a URL in the editor to show a button that converts it to a card",
+  "hover.convertButton": "Convert to card",
   "settings.thumbnailPosition": "Thumbnail position",
   "settings.thumbnailPositionDesc": "Where to show the thumbnail image in the card",
   "settings.thumbnail.right": "Right",
@@ -253,6 +256,9 @@ var it = {
   "settings.resetCounterConfirm": "Azzera il contatore delle card? Verranno riattivate anche le notifiche dei traguardi.",
   "settings.enhancePaste": "Migliora incolla predefinito",
   "settings.enhancePasteDesc": "Recupera automaticamente i metadati quando incolli un URL con il comando di incolla predefinito",
+  "settings.hoverEnhance": "Migliora al passaggio del mouse",
+  "settings.hoverEnhanceDesc": "Passa il mouse su un URL nell'editor per mostrare un pulsante che lo converte in card",
+  "hover.convertButton": "Converti in card",
   "settings.thumbnailPosition": "Posizione anteprima",
   "settings.thumbnailPositionDesc": "Dove mostrare l'immagine di anteprima nella card",
   "settings.thumbnail.right": "Destra",
@@ -633,6 +639,7 @@ function isCardTheme(v) {
 var DEFAULT_SETTINGS = {
   language: "auto",
   enhanceDefaultPaste: false,
+  hoverEnhance: true,
   thumbnailPosition: "right",
   showInMenuItem: true,
   enableWatched: true,
@@ -665,6 +672,12 @@ var Cards4LinksSettingTab = class extends import_obsidian4.PluginSettingTab {
     new import_obsidian4.Setting(containerEl).setName(t("settings.showInMenu")).setDesc(t("settings.showInMenuDesc")).addToggle(
       (toggle) => toggle.setValue(this.plugin.settings.showInMenuItem).onChange((value) => __async(this, null, function* () {
         this.plugin.settings.showInMenuItem = value;
+        yield this.plugin.saveSettings();
+      }))
+    );
+    new import_obsidian4.Setting(containerEl).setName(t("settings.hoverEnhance")).setDesc(t("settings.hoverEnhanceDesc")).addToggle(
+      (toggle) => toggle.setValue(this.plugin.settings.hoverEnhance).onChange((value) => __async(this, null, function* () {
+        this.plugin.settings.hoverEnhance = value;
         yield this.plugin.saveSettings();
       }))
     );
@@ -1800,6 +1813,67 @@ var DescriptionInputModal = class extends import_obsidian6.Modal {
   }
 };
 
+// src/hover-enhance.ts
+var import_view = require("@codemirror/view");
+function hoverEnhanceExtension(enabled, onConvert) {
+  return (0, import_view.hoverTooltip)((view, pos) => {
+    var _a, _b;
+    if (!enabled()) return null;
+    const line = view.state.doc.lineAt(pos);
+    const text = view.state.doc.sliceString(line.from, line.to);
+    let url = "";
+    let fromCh = 0;
+    let toCh = 0;
+    for (const match of text.matchAll(linkLineRegex)) {
+      const start = (_a = match.index) != null ? _a : 0;
+      const end = start + match[0].length;
+      if (pos >= line.from + start && pos <= line.from + end) {
+        url = extractUrlFromLink(match[0]);
+        fromCh = start;
+        toCh = end;
+        break;
+      }
+    }
+    if (!url) {
+      for (const match of text.matchAll(lineUrlRegex)) {
+        const start = (_b = match.index) != null ? _b : 0;
+        const end = start + match[0].length;
+        if (pos >= line.from + start && pos <= line.from + end) {
+          url = match[0];
+          fromCh = start;
+          toCh = end;
+          break;
+        }
+      }
+    }
+    if (!url) return null;
+    return {
+      pos,
+      above: true,
+      create: () => {
+        const dom = document.createElement("div");
+        dom.addClass("cards4links-hover-tooltip");
+        const button = dom.createEl("button", {
+          cls: "cards4links-hover-convert",
+          text: t("hover.convertButton")
+        });
+        button.addEventListener("click", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          view.focus();
+          onConvert({
+            url,
+            line: line.number - 1,
+            fromCh,
+            toCh
+          });
+        });
+        return { dom };
+      }
+    };
+  });
+}
+
 // src/main.ts
 var WELCOME_DELAY_MS = 1500;
 var CARD_MILESTONES = [
@@ -1863,6 +1937,14 @@ var Cards4Links = class extends import_obsidian7.Plugin {
       yield this.loadSettings();
       setLanguage(resolveLang(this.settings.language));
       this.registerCommands();
+      this.registerEditorExtension(
+        hoverEnhanceExtension(
+          () => this.settings.hoverEnhance,
+          (payload) => {
+            void this.convertHoveredUrl(payload);
+          }
+        )
+      );
       if (!this.settings.welcomeShown) {
         window.setTimeout(() => {
           new import_obsidian7.Notice(t("notice.welcome"));
@@ -1961,6 +2043,20 @@ var Cards4Links = class extends import_obsidian7.Plugin {
       } else {
         yield generator.convertGroup(urls);
       }
+    });
+  }
+  convertHoveredUrl(payload) {
+    return __async(this, null, function* () {
+      if (isImage(payload.url)) return;
+      if (!navigator.onLine) return;
+      const editor = this.getEditor();
+      if (!editor) return;
+      editor.setSelection(
+        { line: payload.line, ch: payload.fromCh },
+        { line: payload.line, ch: payload.toCh }
+      );
+      const generator = this.makeGenerator(editor);
+      yield generator.convert(payload.url);
     });
   }
   createCarousel(editor) {

@@ -27,6 +27,7 @@ export function isCacheLocation(v: string): v is CacheLocation {
 export interface Cards4LinksSettings {
   language: LanguageSetting;
   enhanceDefaultPaste: boolean;
+  hoverEnhance: boolean;
   thumbnailPosition: ThumbnailPosition;
   showInMenuItem: boolean;
   enableWatched: boolean;
@@ -45,6 +46,7 @@ export interface Cards4LinksSettings {
 export const DEFAULT_SETTINGS: Cards4LinksSettings = {
   language: "auto",
   enhanceDefaultPaste: false,
+  hoverEnhance: true,
   thumbnailPosition: "right",
   showInMenuItem: true,
   enableWatched: true,
@@ -96,6 +98,18 @@ export class Cards4LinksSettingTab extends PluginSettingTab {
           .setValue(this.plugin.settings.showInMenuItem)
           .onChange(async (value) => {
             this.plugin.settings.showInMenuItem = value;
+            await this.plugin.saveSettings();
+          })
+      );
+
+    new Setting(containerEl)
+      .setName(t("settings.hoverEnhance"))
+      .setDesc(t("settings.hoverEnhanceDesc"))
+      .addToggle((toggle) =>
+        toggle
+          .setValue(this.plugin.settings.hoverEnhance)
+          .onChange(async (value) => {
+            this.plugin.settings.hoverEnhance = value;
             await this.plugin.saveSettings();
           })
       );

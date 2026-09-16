@@ -8,6 +8,8 @@ import { CardGenerator } from "./card-generator";
 import { CardProcessor } from "./card-processor";
 import { isUrl, isImage, isLinkedUrl, extractUrlFromLink } from "./utils";
 import { EditorExtensions } from "./editor-extensions";
+import { hoverEnhanceExtension } from "./hover-enhance";
+import type { HoverConvertPayload } from "./hover-enhance";
 import { LanguageSetting, TKey, resolveLang, setLanguage as applyLang, t } from "./i18n";
 
 const WELCOME_DELAY_MS = 1500;
@@ -36,6 +38,15 @@ export default class Cards4Links extends Plugin {
     applyLang(resolveLang(this.settings.language));
 
     this.registerCommands();
+
+    this.registerEditorExtension(
+      hoverEnhanceExtension(
+        () => this.settings.hoverEnhance,
+        (payload) => {
+          void this.convertHoveredUrl(payload);
+        }
+      )
+    );
 
     if (!this.settings.welcomeShown) {
       window.setTimeout(() => {
@@ -146,6 +157,22 @@ export default class Cards4Links extends Plugin {
     } else {
       await generator.convertGroup(urls);
     }
+  }
+
+  private async convertHoveredUrl(payload: HoverConvertPayload): Promise<void> {
+    if (isImage(payload.url)) return;
+    if (!navigator.onLine) return;
+
+    const editor = this.getEditor();
+    if (!editor) return;
+
+    editor.setSelection(
+      { line: payload.line, ch: payload.fromCh },
+      { line: payload.line, ch: payload.toCh }
+    );
+
+    const generator = this.makeGenerator(editor);
+    await generator.convert(payload.url);
   }
 
   private async createCarousel(editor: Editor): Promise<void> {
