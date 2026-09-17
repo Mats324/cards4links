@@ -48,10 +48,10 @@ __export(main_exports, {
   default: () => Cards4Links
 });
 module.exports = __toCommonJS(main_exports);
-var import_obsidian7 = require("obsidian");
+var import_obsidian9 = require("obsidian");
 
 // src/settings.ts
-var import_obsidian4 = require("obsidian");
+var import_obsidian5 = require("obsidian");
 
 // src/cache-cleanup-modal.ts
 var import_obsidian3 = require("obsidian");
@@ -112,6 +112,8 @@ var en = {
   "modal.description": "Description",
   "ui.save": "Save",
   "ui.cancel": "Cancel",
+  "ui.confirm": "Confirm",
+  "modal.confirmTitle": "Confirmation",
   "settings.language": "Language",
   "settings.languageDesc": "Interface language (auto follows the Obsidian language)",
   "settings.language.auto": "Auto",
@@ -119,12 +121,22 @@ var en = {
   "settings.language.it": "Italiano",
   "settings.cardsCreated": "Cards created",
   "settings.cardsCreatedDesc": "Number of cards generated with Cards4Links since the last reset: {count}",
+  "settings.globalCardsCreated": "Total cards created since install (never reset): {count}",
   "settings.resetCounter": "Reset counter",
   "settings.resetCounterConfirm": "Reset the card counter? This will also restart the milestone notifications.",
   "settings.enhancePaste": "Enhance default paste",
   "settings.enhancePasteDesc": "Automatically fetch metadata when pasting a URL with the default paste command",
   "settings.hoverEnhance": "Enhance on hover",
   "settings.hoverEnhanceDesc": "Hover over a URL in the editor to show a button that converts it to a card",
+  "settings.hoverDuration": "Tooltip lifetime",
+  "settings.hoverDurationDesc": "Minimum time the hover tooltip stays visible before hiding",
+  "settings.hoverDuration.0": "No minimum (hide immediately)",
+  "settings.hoverDuration.500": "500 ms",
+  "settings.hoverDuration.1000": "1 s",
+  "settings.hoverDuration.1500": "1.5 s",
+  "settings.hoverDuration.2000": "2 s",
+  "settings.hoverDuration.3000": "3 s",
+  "settings.hoverDuration.5000": "5 s",
   "hover.convertButton": "Convert to card",
   "settings.thumbnailPosition": "Thumbnail position",
   "settings.thumbnailPositionDesc": "Where to show the thumbnail image in the card",
@@ -245,6 +257,8 @@ var it = {
   "modal.description": "Descrizione",
   "ui.save": "Salva",
   "ui.cancel": "Annulla",
+  "ui.confirm": "Conferma",
+  "modal.confirmTitle": "Conferma",
   "settings.language": "Lingua",
   "settings.languageDesc": "Lingua dell'interfaccia (auto segue la lingua di Obsidian)",
   "settings.language.auto": "Auto",
@@ -252,12 +266,22 @@ var it = {
   "settings.language.it": "Italiano",
   "settings.cardsCreated": "Card create",
   "settings.cardsCreatedDesc": "Numero di card generate con Cards4Links dall'ultimo reset: {count}",
+  "settings.globalCardsCreated": "Card totali create dall'installazione (mai azzerate): {count}",
   "settings.resetCounter": "Azzera contatore",
   "settings.resetCounterConfirm": "Azzera il contatore delle card? Verranno riattivate anche le notifiche dei traguardi.",
   "settings.enhancePaste": "Migliora incolla predefinito",
   "settings.enhancePasteDesc": "Recupera automaticamente i metadati quando incolli un URL con il comando di incolla predefinito",
   "settings.hoverEnhance": "Migliora al passaggio del mouse",
   "settings.hoverEnhanceDesc": "Passa il mouse su un URL nell'editor per mostrare un pulsante che lo converte in card",
+  "settings.hoverDuration": "Durata tooltip",
+  "settings.hoverDurationDesc": "Tempo minimo in cui il tooltip di hover resta visibile prima di scomparire",
+  "settings.hoverDuration.0": "Nessun minimo (chiudi subito)",
+  "settings.hoverDuration.500": "500 ms",
+  "settings.hoverDuration.1000": "1 s",
+  "settings.hoverDuration.1500": "1,5 s",
+  "settings.hoverDuration.2000": "2 s",
+  "settings.hoverDuration.3000": "3 s",
+  "settings.hoverDuration.5000": "5 s",
   "hover.convertButton": "Converti in card",
   "settings.thumbnailPosition": "Posizione anteprima",
   "settings.thumbnailPositionDesc": "Dove mostrare l'immagine di anteprima nella card",
@@ -443,7 +467,7 @@ function deleteFiles(app, folder, filenames) {
       const path = `${folder}/${name}`;
       const file = app.vault.getAbstractFileByPath(path);
       if (file) {
-        yield app.vault.delete(file);
+        yield app.fileManager.trashFile(file);
       }
     }
     yield removeFromManifest(app, folder, filenames);
@@ -608,7 +632,12 @@ var CacheCleanupModal = class extends import_obsidian3.Modal {
       cls: "mod-cta",
       text: t("cache.deleteSelected")
     });
-    deleteBtn.addEventListener("click", () => __async(this, null, function* () {
+    deleteBtn.addEventListener("click", () => {
+      void this.handleDelete();
+    });
+  }
+  handleDelete() {
+    return __async(this, null, function* () {
       const selected = this.rows.filter((r) => r.checked);
       if (selected.length === 0) {
         new import_obsidian3.Notice(t("notice.noFilesSelected"));
@@ -619,7 +648,38 @@ var CacheCleanupModal = class extends import_obsidian3.Modal {
       this.rows = this.rows.filter((r) => !r.checked);
       new import_obsidian3.Notice(t("notice.deletedFiles", { count: filenames.length }));
       this.render();
-    }));
+    });
+  }
+  onClose() {
+    this.contentEl.empty();
+  }
+};
+
+// src/confirm-modal.ts
+var import_obsidian4 = require("obsidian");
+var ConfirmModal = class extends import_obsidian4.Modal {
+  constructor(app, message, onConfirm, confirmButtonText) {
+    super(app);
+    this.message = message;
+    this.onConfirm = onConfirm;
+    this.confirmButtonText = confirmButtonText != null ? confirmButtonText : t("ui.confirm");
+  }
+  onOpen() {
+    this.titleEl.setText(t("modal.confirmTitle"));
+    this.contentEl.createEl("p", { text: this.message });
+    new import_obsidian4.Setting(this.contentEl).addButton(
+      (btn) => btn.setButtonText(this.confirmButtonText).setDestructive().setCta().onClick(() => {
+        this.confirm();
+      })
+    ).addButton(
+      (btn) => btn.setButtonText(t("ui.cancel")).onClick(() => {
+        this.close();
+      })
+    );
+  }
+  confirm() {
+    this.close();
+    this.onConfirm();
   }
   onClose() {
     this.contentEl.empty();
@@ -640,6 +700,7 @@ var DEFAULT_SETTINGS = {
   language: "auto",
   enhanceDefaultPaste: false,
   hoverEnhance: true,
+  hoverTooltipDurationMs: 1500,
   thumbnailPosition: "right",
   showInMenuItem: true,
   enableWatched: true,
@@ -650,11 +711,12 @@ var DEFAULT_SETTINGS = {
   cacheLocation: "vault-absolute",
   cacheTTL: 30,
   cardsCreated: 0,
+  globalCardsCreated: 0,
   welcomeShown: false,
   milestonesShown: [],
   enableWatchedMigrated: false
 };
-var Cards4LinksSettingTab = class extends import_obsidian4.PluginSettingTab {
+var Cards4LinksSettingTab = class extends import_obsidian5.PluginSettingTab {
   constructor(app, plugin) {
     super(app, plugin);
     this.plugin = plugin;
@@ -662,55 +724,95 @@ var Cards4LinksSettingTab = class extends import_obsidian4.PluginSettingTab {
   display() {
     const { containerEl } = this;
     containerEl.empty();
-    new import_obsidian4.Setting(containerEl).setName(t("settings.section.integration")).setHeading();
-    new import_obsidian4.Setting(containerEl).setName(t("settings.enhancePaste")).setDesc(t("settings.enhancePasteDesc")).addToggle(
+    new import_obsidian5.Setting(containerEl).setName(t("settings.section.plugin")).setHeading();
+    new import_obsidian5.Setting(containerEl).setName(t("settings.language")).setDesc(t("settings.languageDesc")).addDropdown(
+      (dropdown) => dropdown.addOption("auto", `\u{1F310} ${t("settings.language.auto")}`).addOption("en", `\u{1F1EC}\u{1F1E7} ${t("settings.language.en")}`).addOption("it", `\u{1F1EE}\u{1F1F9} ${t("settings.language.it")}`).setValue(this.plugin.settings.language).onChange((value) => __async(this, null, function* () {
+        if (value !== "auto" && value !== "en" && value !== "it") return;
+        this.plugin.setLanguage(value);
+        yield this.plugin.saveSettings();
+        this.display();
+      }))
+    );
+    const counterSetting = new import_obsidian5.Setting(containerEl).setName(t("settings.cardsCreated")).setDesc(
+      t("settings.cardsCreatedDesc", {
+        count: this.plugin.settings.cardsCreated
+      })
+    );
+    counterSetting.infoEl.createDiv({
+      cls: "setting-item-description",
+      text: t("settings.globalCardsCreated", {
+        count: this.plugin.settings.globalCardsCreated
+      })
+    });
+    counterSetting.addButton(
+      (btn) => btn.setButtonText(t("settings.resetCounter")).setDestructive().onClick(() => {
+        new ConfirmModal(
+          this.app,
+          t("settings.resetCounterConfirm"),
+          () => {
+            void this.resetCounter();
+          },
+          t("settings.resetCounter")
+        ).open();
+      })
+    );
+    new import_obsidian5.Setting(containerEl).setName(t("settings.section.integration")).setHeading();
+    new import_obsidian5.Setting(containerEl).setName(t("settings.enhancePaste")).setDesc(t("settings.enhancePasteDesc")).addToggle(
       (toggle) => toggle.setValue(this.plugin.settings.enhanceDefaultPaste).onChange((value) => __async(this, null, function* () {
         this.plugin.settings.enhanceDefaultPaste = value;
         yield this.plugin.saveSettings();
       }))
     );
-    new import_obsidian4.Setting(containerEl).setName(t("settings.showInMenu")).setDesc(t("settings.showInMenuDesc")).addToggle(
+    new import_obsidian5.Setting(containerEl).setName(t("settings.showInMenu")).setDesc(t("settings.showInMenuDesc")).addToggle(
       (toggle) => toggle.setValue(this.plugin.settings.showInMenuItem).onChange((value) => __async(this, null, function* () {
         this.plugin.settings.showInMenuItem = value;
         yield this.plugin.saveSettings();
       }))
     );
-    new import_obsidian4.Setting(containerEl).setName(t("settings.hoverEnhance")).setDesc(t("settings.hoverEnhanceDesc")).addToggle(
+    new import_obsidian5.Setting(containerEl).setName(t("settings.hoverEnhance")).setDesc(t("settings.hoverEnhanceDesc")).addToggle(
       (toggle) => toggle.setValue(this.plugin.settings.hoverEnhance).onChange((value) => __async(this, null, function* () {
         this.plugin.settings.hoverEnhance = value;
         yield this.plugin.saveSettings();
       }))
     );
-    new import_obsidian4.Setting(containerEl).setName(t("settings.section.style")).setHeading();
-    new import_obsidian4.Setting(containerEl).setName(t("settings.defaultView")).setDesc(t("settings.defaultViewDesc")).addDropdown(
+    if (this.plugin.settings.hoverEnhance) {
+      new import_obsidian5.Setting(containerEl).setName(t("settings.hoverDuration")).setDesc(t("settings.hoverDurationDesc")).addDropdown(
+        (dropdown) => dropdown.addOption("0", t("settings.hoverDuration.0")).addOption("500", t("settings.hoverDuration.500")).addOption("1000", t("settings.hoverDuration.1000")).addOption("1500", t("settings.hoverDuration.1500")).addOption("2000", t("settings.hoverDuration.2000")).addOption("3000", t("settings.hoverDuration.3000")).addOption("5000", t("settings.hoverDuration.5000")).setValue(String(this.plugin.settings.hoverTooltipDurationMs)).onChange((value) => __async(this, null, function* () {
+          this.plugin.settings.hoverTooltipDurationMs = parseInt(value);
+          yield this.plugin.saveSettings();
+        }))
+      );
+    }
+    new import_obsidian5.Setting(containerEl).setName(t("settings.section.style")).setHeading();
+    new import_obsidian5.Setting(containerEl).setName(t("settings.defaultView")).setDesc(t("settings.defaultViewDesc")).addDropdown(
       (dropdown) => dropdown.addOption("card", t("settings.view.card")).addOption("compact", t("settings.view.compact")).addOption("minimal", t("settings.view.minimal")).setValue(this.plugin.settings.defaultView).onChange((value) => __async(this, null, function* () {
         if (!isCardView(value)) return;
         this.plugin.settings.defaultView = value;
         yield this.plugin.saveSettings();
       }))
     );
-    new import_obsidian4.Setting(containerEl).setName(t("settings.theme")).setDesc(t("settings.themeDesc")).addDropdown(
+    new import_obsidian5.Setting(containerEl).setName(t("settings.theme")).setDesc(t("settings.themeDesc")).addDropdown(
       (dropdown) => dropdown.addOption("default", t("settings.theme.default")).addOption("light", t("settings.theme.light")).addOption("dark", t("settings.theme.dark")).setValue(this.plugin.settings.theme).onChange((value) => __async(this, null, function* () {
         if (!isCardTheme(value)) return;
         this.plugin.settings.theme = value;
         yield this.plugin.saveSettings();
       }))
     );
-    new import_obsidian4.Setting(containerEl).setName(t("settings.thumbnailPosition")).setDesc(t("settings.thumbnailPositionDesc")).addDropdown(
+    new import_obsidian5.Setting(containerEl).setName(t("settings.thumbnailPosition")).setDesc(t("settings.thumbnailPositionDesc")).addDropdown(
       (dropdown) => dropdown.addOption("right", t("settings.thumbnail.right")).addOption("left", t("settings.thumbnail.left")).addOption("none", t("settings.thumbnail.none")).setValue(this.plugin.settings.thumbnailPosition).onChange((value) => __async(this, null, function* () {
         if (!isThumbnailPosition(value)) return;
         this.plugin.settings.thumbnailPosition = value;
         yield this.plugin.saveSettings();
       }))
     );
-    new import_obsidian4.Setting(containerEl).setName(t("settings.enableWatched")).setDesc(t("settings.enableWatchedDesc")).addToggle(
+    new import_obsidian5.Setting(containerEl).setName(t("settings.enableWatched")).setDesc(t("settings.enableWatchedDesc")).addToggle(
       (toggle) => toggle.setValue(this.plugin.settings.enableWatched).onChange((value) => __async(this, null, function* () {
         this.plugin.settings.enableWatched = value;
         yield this.plugin.saveSettings();
       }))
     );
-    new import_obsidian4.Setting(containerEl).setName(t("settings.section.cache")).setHeading();
-    new import_obsidian4.Setting(containerEl).setName(t("settings.cacheImages")).setDesc(t("settings.cacheImagesDesc")).addToggle(
+    new import_obsidian5.Setting(containerEl).setName(t("settings.section.cache")).setHeading();
+    new import_obsidian5.Setting(containerEl).setName(t("settings.cacheImages")).setDesc(t("settings.cacheImagesDesc")).addToggle(
       (toggle) => toggle.setValue(this.plugin.settings.cacheImages).onChange((value) => __async(this, null, function* () {
         this.plugin.settings.cacheImages = value;
         yield this.plugin.saveSettings();
@@ -718,7 +820,7 @@ var Cards4LinksSettingTab = class extends import_obsidian4.PluginSettingTab {
       }))
     );
     if (this.plugin.settings.cacheImages) {
-      new import_obsidian4.Setting(containerEl).setName(t("settings.cacheStorage")).setDesc(t("settings.cacheStorageDesc")).addDropdown(
+      new import_obsidian5.Setting(containerEl).setName(t("settings.cacheStorage")).setDesc(t("settings.cacheStorageDesc")).addDropdown(
         (dropdown) => dropdown.addOption("vault-absolute", t("settings.cacheLocation.vault")).addOption("note-relative", t("settings.cacheLocation.note")).setValue(this.plugin.settings.cacheLocation).onChange((value) => __async(this, null, function* () {
           if (value !== "vault-absolute" && value !== "note-relative")
             return;
@@ -728,20 +830,20 @@ var Cards4LinksSettingTab = class extends import_obsidian4.PluginSettingTab {
         }))
       );
       if (this.plugin.settings.cacheLocation === "vault-absolute") {
-        new import_obsidian4.Setting(containerEl).setName(t("settings.cacheFolder")).setDesc(t("settings.cacheFolderDesc")).addText(
+        new import_obsidian5.Setting(containerEl).setName(t("settings.cacheFolder")).setDesc(t("settings.cacheFolderDesc")).addText(
           (text) => text.setValue(this.plugin.settings.cacheFolder).onChange((value) => __async(this, null, function* () {
             this.plugin.settings.cacheFolder = value || "cards4links-cache";
             yield this.plugin.saveSettings();
           }))
         );
       }
-      new import_obsidian4.Setting(containerEl).setName(t("settings.cacheTtl")).setDesc(t("settings.cacheTtlDesc")).addDropdown(
+      new import_obsidian5.Setting(containerEl).setName(t("settings.cacheTtl")).setDesc(t("settings.cacheTtlDesc")).addDropdown(
         (dropdown) => dropdown.addOption("7", t("settings.ttl.7")).addOption("30", t("settings.ttl.30")).addOption("90", t("settings.ttl.90")).addOption("180", t("settings.ttl.180")).addOption("0", t("settings.ttl.0")).setValue(String(this.plugin.settings.cacheTTL)).onChange((value) => __async(this, null, function* () {
           this.plugin.settings.cacheTTL = parseInt(value);
           yield this.plugin.saveSettings();
         }))
       );
-      new import_obsidian4.Setting(containerEl).setName(t("settings.manageCache")).setDesc(t("settings.manageCacheDesc")).addButton(
+      new import_obsidian5.Setting(containerEl).setName(t("settings.manageCache")).setDesc(t("settings.manageCacheDesc")).addButton(
         (btn) => btn.setButtonText(t("settings.manageCacheButton")).onClick(() => {
           const modal = new CacheCleanupModal(
             this.plugin.app,
@@ -751,35 +853,19 @@ var Cards4LinksSettingTab = class extends import_obsidian4.PluginSettingTab {
         })
       );
     }
-    new import_obsidian4.Setting(containerEl).setName(t("settings.section.plugin")).setHeading();
-    new import_obsidian4.Setting(containerEl).setName(t("settings.language")).setDesc(t("settings.languageDesc")).addDropdown(
-      (dropdown) => dropdown.addOption("auto", `\u{1F310} ${t("settings.language.auto")}`).addOption("en", `\u{1F1EC}\u{1F1E7} ${t("settings.language.en")}`).addOption("it", `\u{1F1EE}\u{1F1F9} ${t("settings.language.it")}`).setValue(this.plugin.settings.language).onChange((value) => __async(this, null, function* () {
-        if (value !== "auto" && value !== "en" && value !== "it") return;
-        this.plugin.setLanguage(value);
-        yield this.plugin.saveSettings();
-        this.display();
-      }))
-    );
-    const counterSetting = new import_obsidian4.Setting(containerEl).setName(t("settings.cardsCreated")).setDesc(
-      t("settings.cardsCreatedDesc", {
-        count: this.plugin.settings.cardsCreated
-      })
-    );
-    counterSetting.addButton(
-      (btn) => btn.setButtonText(t("settings.resetCounter")).setWarning().onClick(() => __async(this, null, function* () {
-        const confirmed = window.confirm(t("settings.resetCounterConfirm"));
-        if (!confirmed) return;
-        this.plugin.settings.cardsCreated = 0;
-        this.plugin.settings.milestonesShown = [];
-        yield this.plugin.saveSettings();
-        this.display();
-      }))
-    );
+  }
+  resetCounter() {
+    return __async(this, null, function* () {
+      this.plugin.settings.cardsCreated = 0;
+      this.plugin.settings.milestonesShown = [];
+      yield this.plugin.saveSettings();
+      this.display();
+    });
   }
 };
 
 // src/card-generator.ts
-var import_obsidian5 = require("obsidian");
+var import_obsidian6 = require("obsidian");
 
 // src/metadata-parser.ts
 var MetadataParser = class {
@@ -953,7 +1039,7 @@ var CardGenerator = class {
       const placeholderId = this.randomId();
       const placeholder = `[Fetching Data#${placeholderId}](${url})`;
       this.editor.replaceSelection(placeholder);
-      new import_obsidian5.Notice(t("notice.fetchingMetadata"));
+      new import_obsidian6.Notice(t("notice.fetchingMetadata"));
       const metadata = yield this.fetchMetadata(url);
       if (metadata && this.cacheImages && metadata.image && this.app) {
         yield this.cacheImage(metadata);
@@ -961,8 +1047,8 @@ var CardGenerator = class {
       const text = this.editor.getValue();
       const start = text.indexOf(placeholder);
       if (start < 0) {
-        console.log(
-          `Could not find placeholder "${placeholder}" in editor, bailing out; url ${url}`
+        console.warn(
+          `Cards4Links: could not find placeholder "${placeholder}" in editor, bailing out; url ${url}`
         );
         return;
       }
@@ -970,7 +1056,7 @@ var CardGenerator = class {
       const startPos = EditorExtensions.posFromIndex(text, start);
       const endPos = EditorExtensions.posFromIndex(text, end);
       if (!metadata) {
-        new import_obsidian5.Notice(t("notice.fetchFailed"));
+        new import_obsidian6.Notice(t("notice.fetchFailed"));
         this.editor.replaceRange(selectedText || url, startPos, endPos);
         return;
       }
@@ -982,14 +1068,14 @@ var CardGenerator = class {
     return __async(this, null, function* () {
       var _a;
       if (urls.length < 2) {
-        new import_obsidian5.Notice(t("notice.selectTwoUrls"));
+        new import_obsidian6.Notice(t("notice.selectTwoUrls"));
         return;
       }
       const selectedText = this.editor.getSelection();
       const placeholderId = this.randomId();
       const placeholder = `[Fetching Data#${placeholderId}](${urls.length} links)`;
       this.editor.replaceSelection(placeholder);
-      new import_obsidian5.Notice(t("notice.fetchingMetadataGroup", { count: urls.length }));
+      new import_obsidian6.Notice(t("notice.fetchingMetadataGroup", { count: urls.length }));
       const results = yield Promise.allSettled(
         urls.map((url) => this.fetchMetadata(url))
       );
@@ -1000,7 +1086,7 @@ var CardGenerator = class {
         }
       }
       if (metadataList.length === 0) {
-        new import_obsidian5.Notice(t("notice.fetchFailedAll"));
+        new import_obsidian6.Notice(t("notice.fetchFailedAll"));
         this.editor.replaceSelection(selectedText || urls.join("\n"));
         return;
       }
@@ -1014,7 +1100,7 @@ var CardGenerator = class {
       const text = this.editor.getValue();
       const start = text.indexOf(placeholder);
       if (start < 0) {
-        console.log(
+        console.warn(
           `Cards4Links: could not find placeholder "${placeholder}" in editor`
         );
         return;
@@ -1028,7 +1114,7 @@ var CardGenerator = class {
         endPos
       );
       (_a = this.onCardsCreated) == null ? void 0 : _a.call(this, metadataList.length);
-      new import_obsidian5.Notice(t("notice.createdCarousel", { count: metadataList.length }));
+      new import_obsidian6.Notice(t("notice.createdCarousel", { count: metadataList.length }));
     });
   }
   generateCodeBlock(md) {
@@ -1064,15 +1150,15 @@ var CardGenerator = class {
   fetchMetadata(url) {
     return __async(this, null, function* () {
       try {
-        const res = yield (0, import_obsidian5.requestUrl)({ url });
+        const res = yield (0, import_obsidian6.requestUrl)({ url });
         if (res.status !== 200) {
-          console.log(`Cards4Links: bad response status ${res.status}`);
+          console.warn(`Cards4Links: bad response status ${res.status}`);
           return void 0;
         }
         const parser = new MetadataParser(url, res.text);
         return yield parser.parse();
       } catch (e) {
-        console.log("Cards4Links fetch error:", e);
+        console.error("Cards4Links fetch error:", e);
         return void 0;
       }
     });
@@ -1102,11 +1188,11 @@ var CardGenerator = class {
           filename,
           originalUrl: metadata.image,
           cachedAt: (/* @__PURE__ */ new Date()).toISOString(),
-          size: file && file instanceof import_obsidian5.TFile ? file.stat.size : 0
+          size: file && file instanceof import_obsidian6.TFile ? file.stat.size : 0
         });
         metadata.imageLocal = `${folder}/${filename}`;
       } catch (e) {
-        console.log("Cards4Links: failed to cache image", e);
+        console.error("Cards4Links: failed to cache image", e);
       }
     });
   }
@@ -1121,7 +1207,7 @@ var CardGenerator = class {
 };
 
 // src/card-processor.ts
-var import_obsidian6 = require("obsidian");
+var import_obsidian7 = require("obsidian");
 function createSvgIcon(viewBox, size, ...elements) {
   const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
   svg.setAttribute("viewBox", viewBox);
@@ -1274,9 +1360,9 @@ var CardProcessor = class {
       })
     ).join("\n");
     try {
-      yaml = (0, import_obsidian6.parseYaml)(normalized);
+      yaml = (0, import_obsidian7.parseYaml)(normalized);
     } catch (error) {
-      console.log("Cards4Links YAML parse error:", error);
+      console.error("Cards4Links YAML parse error:", error);
       throw new YamlParseError(t("error.yamlParse"));
     }
     if (!yaml || !yaml.url || !yaml.title) {
@@ -1446,7 +1532,7 @@ view: ${isGroup ? "carousel" : this.defaultView}`;
     copyBtn.addEventListener("click", (e) => {
       e.stopPropagation();
       void navigator.clipboard.writeText(data.url);
-      new import_obsidian6.Notice(t("notice.urlCopied"));
+      new import_obsidian7.Notice(t("notice.urlCopied"));
     });
     if (isGroup) {
       const wrapper = createDiv({ cls: "cards4links-card-wrapper" });
@@ -1507,7 +1593,7 @@ view: ${isGroup ? "carousel" : this.defaultView}`;
       try {
         const buffer = yield downloadImage(data.image);
         const file = this.app.vault.getAbstractFileByPath(data.imageLocal);
-        if (file instanceof import_obsidian6.TFile) {
+        if (file instanceof import_obsidian7.TFile) {
           yield this.app.vault.modifyBinary(file, buffer);
         } else {
           yield ensureFolder(this.app, folder);
@@ -1518,10 +1604,10 @@ view: ${isGroup ? "carousel" : this.defaultView}`;
           filename,
           originalUrl: data.image,
           cachedAt: (/* @__PURE__ */ new Date()).toISOString(),
-          size: tf instanceof import_obsidian6.TFile ? tf.stat.size : 0
+          size: tf instanceof import_obsidian7.TFile ? tf.stat.size : 0
         });
       } catch (e) {
-        console.log("Cards4Links: TTL refresh failed", e);
+        console.error("Cards4Links: TTL refresh failed", e);
       }
     });
   }
@@ -1592,15 +1678,13 @@ ${field}: ${value}`;
     this.source = newSource;
   }
   replaceBlock(oldSource, newSource) {
-    const markdownView = this.app.workspace.getActiveViewOfType(import_obsidian6.MarkdownView);
+    const markdownView = this.app.workspace.getActiveViewOfType(import_obsidian7.MarkdownView);
     if (!markdownView) {
-      console.log("Cards4Links: no active MarkdownView");
-      new import_obsidian6.Notice(t("notice.cannotEditReading"));
+      new import_obsidian7.Notice(t("notice.cannotEditReading"));
       return;
     }
     const editor = markdownView.editor;
     if (!editor) {
-      console.log("Cards4Links: no editor available");
       return;
     }
     const text = editor.getValue();
@@ -1626,8 +1710,8 @@ ${finalContent}
           endPos
         );
       } catch (e) {
-        console.log("Cards4Links: failed to update code block", e);
-        new import_obsidian6.Notice(t("notice.errorUpdatingCard"));
+        console.error("Cards4Links: failed to update code block", e);
+        new import_obsidian7.Notice(t("notice.errorUpdatingCard"));
       }
       break;
     }
@@ -1712,10 +1796,10 @@ ${finalContent}
         void viewport.scrollBy({ left: getSlideWidth(), behavior: "smooth" });
       }
     });
-    requestAnimationFrame(() => updateNav());
+    window.requestAnimationFrame(() => updateNav());
   }
 };
-var ImagePickerModal = class extends import_obsidian6.Modal {
+var ImagePickerModal = class extends import_obsidian7.Modal {
   constructor(app, currentUrl, onSubmit) {
     super(app);
     this.currentUrl = currentUrl != null ? currentUrl : "";
@@ -1727,7 +1811,7 @@ var ImagePickerModal = class extends import_obsidian6.Modal {
     contentEl.createEl("h2", { text: t("modal.setImageTitle") });
     let imageUrl = this.currentUrl;
     let textInput;
-    new import_obsidian6.Setting(contentEl).setName(t("modal.imageUrl")).setDesc(t("modal.imageUrlDesc")).addText((text) => {
+    new import_obsidian7.Setting(contentEl).setName(t("modal.imageUrl")).setDesc(t("modal.imageUrlDesc")).addText((text) => {
       text.setValue(imageUrl);
       text.onChange((value) => {
         imageUrl = value;
@@ -1749,7 +1833,7 @@ var ImagePickerModal = class extends import_obsidian6.Modal {
         }
       }));
     });
-    new import_obsidian6.Setting(contentEl).addButton((btn) => {
+    new import_obsidian7.Setting(contentEl).addButton((btn) => {
       btn.setButtonText(t("ui.save"));
       btn.setCta();
       btn.onClick(() => {
@@ -1761,7 +1845,7 @@ var ImagePickerModal = class extends import_obsidian6.Modal {
           this.close();
         };
         img.onerror = () => {
-          new import_obsidian6.Notice(t("notice.imageLoadFailed"));
+          new import_obsidian7.Notice(t("notice.imageLoadFailed"));
         };
         img.src = url;
       });
@@ -1776,7 +1860,7 @@ var ImagePickerModal = class extends import_obsidian6.Modal {
     this.contentEl.empty();
   }
 };
-var DescriptionInputModal = class extends import_obsidian6.Modal {
+var DescriptionInputModal = class extends import_obsidian7.Modal {
   constructor(app, onSubmit) {
     super(app);
     this.onSubmit = onSubmit;
@@ -1786,7 +1870,7 @@ var DescriptionInputModal = class extends import_obsidian6.Modal {
     contentEl.addClass("cards4links-modal");
     contentEl.createEl("h2", { text: t("modal.setDescriptionTitle") });
     let description = "";
-    new import_obsidian6.Setting(contentEl).setName(t("modal.description")).addTextArea((text) => {
+    new import_obsidian7.Setting(contentEl).setName(t("modal.description")).addTextArea((text) => {
       text.setValue(description);
       text.onChange((value) => {
         description = value;
@@ -1794,7 +1878,7 @@ var DescriptionInputModal = class extends import_obsidian6.Modal {
       text.inputEl.rows = 4;
       text.inputEl.focus();
     });
-    new import_obsidian6.Setting(contentEl).addButton((btn) => {
+    new import_obsidian7.Setting(contentEl).addButton((btn) => {
       btn.setButtonText(t("ui.save"));
       btn.setCta();
       btn.onClick(() => {
@@ -1815,63 +1899,291 @@ var DescriptionInputModal = class extends import_obsidian6.Modal {
 
 // src/hover-enhance.ts
 var import_view = require("@codemirror/view");
-function hoverEnhanceExtension(enabled, onConvert) {
-  return (0, import_view.hoverTooltip)((view, pos) => {
-    var _a, _b;
-    if (!enabled()) return null;
-    const line = view.state.doc.lineAt(pos);
-    const text = view.state.doc.sliceString(line.from, line.to);
-    let url = "";
-    let fromCh = 0;
-    let toCh = 0;
-    for (const match of text.matchAll(linkLineRegex)) {
-      const start = (_a = match.index) != null ? _a : 0;
-      const end = start + match[0].length;
-      if (pos >= line.from + start && pos <= line.from + end) {
-        url = extractUrlFromLink(match[0]);
-        fromCh = start;
-        toCh = end;
-        break;
+var import_obsidian8 = require("obsidian");
+var SHOW_DELAY_MS = 150;
+var HIDE_DELAY_MS = 150;
+var POPOVER_MARGIN = 16;
+var POPOVER_OFFSET = 6;
+var hoverUrlRegex = new RegExp(
+  `${linkLineRegex.source}|${lineUrlRegex.source}`,
+  "gi"
+);
+var urlMarkDecoration = import_view.Decoration.mark({ class: "cards4links-hover-url" });
+function hoverEnhanceExtension(enabled, getTooltipDurationMs, onConvert) {
+  return import_view.ViewPlugin.fromClass(
+    class HoverEnhancePlugin {
+      constructor(view) {
+        this.popover = null;
+        this.payload = null;
+        this.activeSpan = null;
+        this.showTimer = -1;
+        this.hideTimer = -1;
+        this.shownAt = -1;
+        this.lastClientX = -1;
+        this.lastClientY = -1;
+        this.onScroll = () => {
+          if (!this.popover) return;
+          if (!this.positionPopover(this.popover)) this.hide();
+        };
+        this.view = view;
+        this.matcher = new import_view.MatchDecorator({
+          regexp: hoverUrlRegex,
+          decorate: (add, from, to, match) => {
+            const isLink = match[0].charAt(0) === "[";
+            if (isLink && !extractUrlFromLink(match[0])) return;
+            add(from, to, urlMarkDecoration);
+          }
+        });
+        this.decorations = this.matcher.createDeco(view);
+        view.scrollDOM.addEventListener("scroll", this.onScroll);
       }
-    }
-    if (!url) {
-      for (const match of text.matchAll(lineUrlRegex)) {
-        const start = (_b = match.index) != null ? _b : 0;
-        const end = start + match[0].length;
-        if (pos >= line.from + start && pos <= line.from + end) {
-          url = match[0];
-          fromCh = start;
-          toCh = end;
-          break;
+      update(update) {
+        this.decorations = this.matcher.updateDeco(update, this.decorations);
+        if (update.docChanged) {
+          this.hardHide();
+          return;
+        }
+        if (!update.geometryChanged || !this.popover) return;
+        if (!this.positionPopover(this.popover)) this.hide();
+      }
+      destroy() {
+        this.view.scrollDOM.removeEventListener("scroll", this.onScroll);
+        this.hardHide();
+      }
+      handleMousemove(event) {
+        this.lastClientX = event.clientX;
+        this.lastClientY = event.clientY;
+        if (!enabled()) {
+          this.hardHide();
+          return;
+        }
+        const span = this.urlSpanFromEvent(event);
+        if (span) {
+          if (span !== this.activeSpan) {
+            this.activeSpan = span;
+            const pos = this.view.posAtCoords({
+              x: event.clientX,
+              y: event.clientY
+            });
+            this.payload = pos == null ? null : this.findPayload(pos);
+            if (!this.payload) {
+              this.activeSpan = null;
+              return;
+            }
+            this.prepareShow();
+          } else {
+            this.cancelHideTimer();
+          }
+          return;
+        }
+        this.activeSpan = null;
+        if (this.popover && this.isOverPopover(event.clientX, event.clientY)) {
+          this.cancelHideTimer();
+          return;
+        }
+        this.scheduleHide();
+      }
+      handleMouseleave() {
+        this.scheduleHide();
+      }
+      urlSpanFromEvent(event) {
+        let node = event.target;
+        if (!node) return null;
+        if (!(node instanceof Element)) node = node.parentElement;
+        if (!(node instanceof Element)) return null;
+        const el = node.closest(".cards4links-hover-url");
+        return el instanceof HTMLElement ? el : null;
+      }
+      isOverPopover(clientX, clientY) {
+        const el = this.popover;
+        if (!el) return false;
+        const rect = el.getBoundingClientRect();
+        return clientX >= rect.left - POPOVER_MARGIN && clientX <= rect.right + POPOVER_MARGIN && clientY >= rect.top - POPOVER_MARGIN && clientY <= rect.bottom + POPOVER_MARGIN;
+      }
+      findPayload(pos) {
+        var _a, _b;
+        const line = this.view.state.doc.lineAt(pos);
+        const text = this.view.state.doc.sliceString(line.from, line.to);
+        for (const match of text.matchAll(linkLineRegex)) {
+          const start = (_a = match.index) != null ? _a : 0;
+          const end = start + match[0].length;
+          if (pos >= line.from + start && pos <= line.from + end) {
+            const url = extractUrlFromLink(match[0]);
+            if (url) {
+              return {
+                url,
+                line: line.number - 1,
+                fromCh: start,
+                toCh: end
+              };
+            }
+            break;
+          }
+        }
+        for (const match of text.matchAll(lineUrlRegex)) {
+          const start = (_b = match.index) != null ? _b : 0;
+          const end = start + match[0].length;
+          if (pos >= line.from + start && pos <= line.from + end) {
+            return {
+              url: match[0],
+              line: line.number - 1,
+              fromCh: start,
+              toCh: end
+            };
+          }
+        }
+        return null;
+      }
+      prepareShow() {
+        if (!this.payload) return;
+        this.cancelHideTimer();
+        if (this.showTimer >= 0) {
+          window.clearTimeout(this.showTimer);
+        }
+        this.showTimer = window.setTimeout(() => {
+          this.showTimer = -1;
+          this.showPopover();
+        }, SHOW_DELAY_MS);
+      }
+      scheduleHide() {
+        if (this.hideTimer >= 0) return;
+        this.hideTimer = window.setTimeout(() => {
+          this.hideTimer = -1;
+          this.hide();
+        }, HIDE_DELAY_MS);
+      }
+      cancelHideTimer() {
+        if (this.hideTimer >= 0) {
+          window.clearTimeout(this.hideTimer);
+          this.hideTimer = -1;
         }
       }
-    }
-    if (!url) return null;
-    return {
-      pos,
-      above: true,
-      create: () => {
-        const dom = document.createElement("div");
-        dom.addClass("cards4links-hover-tooltip");
-        const button = dom.createEl("button", {
-          cls: "cards4links-hover-convert",
-          text: t("hover.convertButton")
+      clearTimers() {
+        this.cancelHideTimer();
+        if (this.showTimer >= 0) {
+          window.clearTimeout(this.showTimer);
+          this.showTimer = -1;
+        }
+      }
+      showPopover() {
+        if (!this.payload || !this.activeSpan) return;
+        this.removePopover();
+        const popover = createDiv({ cls: "cards4links-hover-tooltip" });
+        const button = popover.createEl("button", {
+          cls: "cards4links-hover-convert"
+        });
+        (0, import_obsidian8.setIcon)(button, "wand-2");
+        button.createSpan({ text: t("hover.convertButton") });
+        button.addEventListener("mousedown", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
         });
         button.addEventListener("click", (e) => {
           e.preventDefault();
           e.stopPropagation();
-          view.focus();
-          onConvert({
-            url,
-            line: line.number - 1,
-            fromCh,
-            toCh
-          });
+          this.view.focus();
+          const payload = this.payload;
+          this.removePopover();
+          if (payload) onConvert(payload);
         });
-        return { dom };
+        this.view.dom.appendChild(popover);
+        this.popover = popover;
+        if (!this.positionPopover(popover)) {
+          this.hardHide();
+          return;
+        }
+        this.shownAt = Date.now();
       }
-    };
-  });
+      positionPopover(popover) {
+        const payload = this.payload;
+        if (!payload) return false;
+        const line = this.view.state.doc.line(payload.line);
+        const from = Math.min(line.from + payload.fromCh, line.to);
+        const to = Math.max(from, Math.min(line.from + payload.toCh, line.to));
+        const fromRect = this.view.coordsAtPos(from, -1);
+        const toRect = this.view.coordsAtPos(to, 1);
+        if (!fromRect || !toRect) return false;
+        const editorRect = this.view.dom.getBoundingClientRect();
+        const offsetParent = popover.offsetParent;
+        const base = offsetParent ? offsetParent.getBoundingClientRect() : editorRect;
+        const center = (fromRect.left + toRect.right) / 2;
+        const width = popover.offsetWidth;
+        const height = popover.offsetHeight;
+        let left = center - base.left - width / 2;
+        const minLeft = editorRect.left - base.left + POPOVER_MARGIN;
+        const maxLeft = editorRect.right - base.left - width - POPOVER_MARGIN;
+        if (maxLeft < minLeft) {
+          left = editorRect.left - base.left + POPOVER_MARGIN;
+        } else {
+          left = Math.max(minLeft, Math.min(left, maxLeft));
+        }
+        const belowTop = toRect.bottom - base.top + POPOVER_OFFSET;
+        const belowFits = belowTop + height <= editorRect.bottom - base.top - POPOVER_MARGIN;
+        const top = belowFits ? belowTop : fromRect.top - base.top - height - POPOVER_OFFSET;
+        const minTop = editorRect.top - base.top + POPOVER_MARGIN;
+        const maxTop = editorRect.bottom - base.top - height - POPOVER_MARGIN;
+        const clampedTop = Math.max(minTop, Math.min(top, maxTop));
+        popover.style.left = `${Math.round(left)}px`;
+        popover.style.top = `${Math.round(clampedTop)}px`;
+        return true;
+      }
+      removePopover() {
+        if (this.popover) {
+          this.popover.remove();
+          this.popover = null;
+        }
+      }
+      isPointerOnKeepAlive() {
+        if (this.lastClientX < 0) return false;
+        const el = document.elementFromPoint(this.lastClientX, this.lastClientY);
+        if (this.popover && el && this.popover.contains(el)) return true;
+        if (el instanceof Element) {
+          return el.closest(".cards4links-hover-url") === this.activeSpan && this.activeSpan !== null;
+        }
+        return false;
+      }
+      hide() {
+        if (this.isPointerOnKeepAlive()) return;
+        if (!this.graceElapsed()) {
+          this.deferHide();
+          return;
+        }
+        this.hardHide();
+      }
+      hardHide() {
+        this.clearTimers();
+        this.removePopover();
+        this.payload = null;
+        this.activeSpan = null;
+        this.shownAt = -1;
+      }
+      graceElapsed() {
+        return this.shownAt < 0 || Date.now() >= this.shownAt + getTooltipDurationMs();
+      }
+      deferHide() {
+        if (this.hideTimer >= 0) return;
+        const delay = Math.max(
+          0,
+          this.shownAt + getTooltipDurationMs() - Date.now()
+        );
+        this.hideTimer = window.setTimeout(() => {
+          this.hideTimer = -1;
+          this.hide();
+        }, delay);
+      }
+    },
+    {
+      decorations: (value) => value.decorations,
+      eventHandlers: {
+        mousemove(event) {
+          this.handleMousemove(event);
+        },
+        mouseleave() {
+          this.handleMouseleave();
+        }
+      }
+    }
+  );
 }
 
 // src/main.ts
@@ -1885,7 +2197,7 @@ var CARD_MILESTONES = [
   { threshold: 50, key: "milestone.50" },
   { threshold: 100, key: "milestone.100" }
 ];
-var Cards4Links = class extends import_obsidian7.Plugin {
+var Cards4Links = class extends import_obsidian9.Plugin {
   constructor() {
     super(...arguments);
     this.onPaste = (evt, editor) => __async(this, null, function* () {
@@ -1940,6 +2252,7 @@ var Cards4Links = class extends import_obsidian7.Plugin {
       this.registerEditorExtension(
         hoverEnhanceExtension(
           () => this.settings.hoverEnhance,
+          () => this.settings.hoverTooltipDurationMs,
           (payload) => {
             void this.convertHoveredUrl(payload);
           }
@@ -1947,7 +2260,7 @@ var Cards4Links = class extends import_obsidian7.Plugin {
       );
       if (!this.settings.welcomeShown) {
         window.setTimeout(() => {
-          new import_obsidian7.Notice(t("notice.welcome"));
+          new import_obsidian9.Notice(t("notice.welcome"));
           this.settings.welcomeShown = true;
           void this.saveSettings();
         }, WELCOME_DELAY_MS);
@@ -2073,7 +2386,7 @@ var Cards4Links = class extends import_obsidian7.Plugin {
         }
       }
       if (urls.length < 2) {
-        new import_obsidian7.Notice(t("notice.selectTwoUrls"));
+        new import_obsidian9.Notice(t("notice.selectTwoUrls"));
         return;
       }
       yield generator.convertGroup(urls);
@@ -2117,17 +2430,17 @@ ${newContent}\`\`\``
       });
     }
     if (replacements.length === 0) {
-      new import_obsidian7.Notice(t("notice.noOldCards"));
+      new import_obsidian9.Notice(t("notice.noOldCards"));
       return;
     }
     replacements.reverse();
     for (const r of replacements) {
       editor.replaceRange(r.content, r.start, r.end);
     }
-    new import_obsidian7.Notice(t("notice.updatedCards", { count: replacements.length }));
+    new import_obsidian9.Notice(t("notice.updatedCards", { count: replacements.length }));
   }
   getEditor() {
-    const view = this.app.workspace.getActiveViewOfType(import_obsidian7.MarkdownView);
+    const view = this.app.workspace.getActiveViewOfType(import_obsidian9.MarkdownView);
     return view == null ? void 0 : view.editor;
   }
   makeGenerator(editor) {
@@ -2163,11 +2476,12 @@ ${newContent}\`\`\``
   }
   onCardsCreated(count) {
     this.settings.cardsCreated += count;
+    this.settings.globalCardsCreated += count;
     const newTotal = this.settings.cardsCreated;
     for (const milestone of CARD_MILESTONES) {
       if (newTotal >= milestone.threshold && !this.settings.milestonesShown.includes(milestone.threshold)) {
         this.settings.milestonesShown.push(milestone.threshold);
-        new import_obsidian7.Notice(t(milestone.key));
+        new import_obsidian9.Notice(t(milestone.key));
       }
     }
     void this.saveSettings();

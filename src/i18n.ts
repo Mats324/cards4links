@@ -77,6 +77,8 @@ const en = {
   "modal.description": "Description",
   "ui.save": "Save",
   "ui.cancel": "Cancel",
+  "ui.confirm": "Confirm",
+  "modal.confirmTitle": "Confirmation",
 
   "settings.language": "Language",
   "settings.languageDesc":
@@ -87,6 +89,8 @@ const en = {
   "settings.cardsCreated": "Cards created",
   "settings.cardsCreatedDesc":
     "Number of cards generated with Cards4Links since the last reset: {count}",
+  "settings.globalCardsCreated":
+    "Total cards created since install (never reset): {count}",
   "settings.resetCounter": "Reset counter",
   "settings.resetCounterConfirm":
     "Reset the card counter? This will also restart the milestone notifications.",
@@ -96,6 +100,16 @@ const en = {
   "settings.hoverEnhance": "Enhance on hover",
   "settings.hoverEnhanceDesc":
     "Hover over a URL in the editor to show a button that converts it to a card",
+  "settings.hoverDuration": "Tooltip lifetime",
+  "settings.hoverDurationDesc":
+    "Minimum time the hover tooltip stays visible before hiding",
+  "settings.hoverDuration.0": "No minimum (hide immediately)",
+  "settings.hoverDuration.500": "500 ms",
+  "settings.hoverDuration.1000": "1 s",
+  "settings.hoverDuration.1500": "1.5 s",
+  "settings.hoverDuration.2000": "2 s",
+  "settings.hoverDuration.3000": "3 s",
+  "settings.hoverDuration.5000": "5 s",
   "hover.convertButton": "Convert to card",
   "settings.thumbnailPosition": "Thumbnail position",
   "settings.thumbnailPositionDesc": "Where to show the thumbnail image in the card",
@@ -247,6 +261,8 @@ const it: Translations = {
   "modal.description": "Descrizione",
   "ui.save": "Salva",
   "ui.cancel": "Annulla",
+  "ui.confirm": "Conferma",
+  "modal.confirmTitle": "Conferma",
 
   "settings.language": "Lingua",
   "settings.languageDesc":
@@ -257,6 +273,8 @@ const it: Translations = {
   "settings.cardsCreated": "Card create",
   "settings.cardsCreatedDesc":
     "Numero di card generate con Cards4Links dall'ultimo reset: {count}",
+  "settings.globalCardsCreated":
+    "Card totali create dall'installazione (mai azzerate): {count}",
   "settings.resetCounter": "Azzera contatore",
   "settings.resetCounterConfirm":
     "Azzera il contatore delle card? Verranno riattivate anche le notifiche dei traguardi.",
@@ -266,6 +284,16 @@ const it: Translations = {
   "settings.hoverEnhance": "Migliora al passaggio del mouse",
   "settings.hoverEnhanceDesc":
     "Passa il mouse su un URL nell'editor per mostrare un pulsante che lo converte in card",
+  "settings.hoverDuration": "Durata tooltip",
+  "settings.hoverDurationDesc":
+    "Tempo minimo in cui il tooltip di hover resta visibile prima di scomparire",
+  "settings.hoverDuration.0": "Nessun minimo (chiudi subito)",
+  "settings.hoverDuration.500": "500 ms",
+  "settings.hoverDuration.1000": "1 s",
+  "settings.hoverDuration.1500": "1,5 s",
+  "settings.hoverDuration.2000": "2 s",
+  "settings.hoverDuration.3000": "3 s",
+  "settings.hoverDuration.5000": "5 s",
   "hover.convertButton": "Converti in card",
   "settings.thumbnailPosition": "Posizione anteprima",
   "settings.thumbnailPositionDesc": "Dove mostrare l'immagine di anteprima nella card",

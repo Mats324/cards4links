@@ -178,7 +178,7 @@ export class CardProcessor {
     try {
       yaml = parseYaml(normalized) as Partial<LinkMetadata>;
     } catch (error) {
-      console.log("Cards4Links YAML parse error:", error);
+      console.error("Cards4Links YAML parse error:", error);
       throw new YamlParseError(t("error.yamlParse"));
     }
 
@@ -444,7 +444,7 @@ export class CardProcessor {
         size: tf instanceof TFile ? tf.stat.size : 0,
       });
     } catch (e) {
-      console.log("Cards4Links: TTL refresh failed", e);
+      console.error("Cards4Links: TTL refresh failed", e);
     }
   }
 
@@ -537,13 +537,11 @@ export class CardProcessor {
   private replaceBlock(oldSource: string, newSource: string): void {
     const markdownView = this.app.workspace.getActiveViewOfType(MarkdownView);
     if (!markdownView) {
-      console.log("Cards4Links: no active MarkdownView");
       new Notice(t("notice.cannotEditReading"));
       return;
     }
     const editor = markdownView.editor;
     if (!editor) {
-      console.log("Cards4Links: no editor available");
       return;
     }
 
@@ -575,7 +573,7 @@ export class CardProcessor {
           endPos
         );
       } catch (e) {
-        console.log("Cards4Links: failed to update code block", e);
+        console.error("Cards4Links: failed to update code block", e);
         new Notice(t("notice.errorUpdatingCard"));
       }
       break;
@@ -679,7 +677,7 @@ export class CardProcessor {
       }
     });
 
-    requestAnimationFrame(() => updateNav());
+    window.requestAnimationFrame(() => updateNav());
   }
 }
 

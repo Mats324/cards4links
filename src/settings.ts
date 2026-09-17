@@ -1,6 +1,7 @@
 import { App, PluginSettingTab, Setting } from "obsidian";
 import Cards4Links from "./main";
 import { CacheCleanupModal } from "./cache-cleanup-modal";
+import { ConfirmModal } from "./confirm-modal";
 import { LanguageSetting, t } from "./i18n";
 
 export type ThumbnailPosition = "right" | "left" | "none";
@@ -28,6 +29,7 @@ export interface Cards4LinksSettings {
   language: LanguageSetting;
   enhanceDefaultPaste: boolean;
   hoverEnhance: boolean;
+  hoverTooltipDurationMs: number;
   thumbnailPosition: ThumbnailPosition;
   showInMenuItem: boolean;
   enableWatched: boolean;
@@ -38,6 +40,7 @@ export interface Cards4LinksSettings {
   cacheLocation: CacheLocation;
   cacheTTL: number;
   cardsCreated: number;
+  globalCardsCreated: number;
   welcomeShown: boolean;
   milestonesShown: number[];
   enableWatchedMigrated: boolean;
@@ -47,6 +50,7 @@ export const DEFAULT_SETTINGS: Cards4LinksSettings = {
   language: "auto",
   enhanceDefaultPaste: false,
   hoverEnhance: true,
+  hoverTooltipDurationMs: 1500,
   thumbnailPosition: "right",
   showInMenuItem: true,
   enableWatched: true,
@@ -57,6 +61,7 @@ export const DEFAULT_SETTINGS: Cards4LinksSettings = {
   cacheLocation: "vault-absolute",
   cacheTTL: 30,
   cardsCreated: 0,
+  globalCardsCreated: 0,
   welcomeShown: false,
   milestonesShown: [],
   enableWatchedMigrated: false,
@@ -73,6 +78,58 @@ export class Cards4LinksSettingTab extends PluginSettingTab {
   display(): void {
     const { containerEl } = this;
     containerEl.empty();
+
+    new Setting(containerEl)
+      .setName(t("settings.section.plugin"))
+      .setHeading();
+
+    new Setting(containerEl)
+      .setName(t("settings.language"))
+      .setDesc(t("settings.languageDesc"))
+      .addDropdown((dropdown) =>
+        dropdown
+          .addOption("auto", `🌐 ${t("settings.language.auto")}`)
+          .addOption("en", `🇬🇧 ${t("settings.language.en")}`)
+          .addOption("it", `🇮🇹 ${t("settings.language.it")}`)
+          .setValue(this.plugin.settings.language)
+          .onChange(async (value) => {
+            if (value !== "auto" && value !== "en" && value !== "it") return;
+            this.plugin.setLanguage(value);
+            await this.plugin.saveSettings();
+            this.display();
+          })
+      );
+
+    const counterSetting = new Setting(containerEl)
+      .setName(t("settings.cardsCreated"))
+      .setDesc(
+        t("settings.cardsCreatedDesc", {
+          count: this.plugin.settings.cardsCreated,
+        })
+      );
+
+    counterSetting.infoEl.createDiv({
+      cls: "setting-item-description",
+      text: t("settings.globalCardsCreated", {
+        count: this.plugin.settings.globalCardsCreated,
+      }),
+    });
+
+    counterSetting.addButton((btn) =>
+      btn
+        .setButtonText(t("settings.resetCounter"))
+        .setDestructive()
+        .onClick(() => {
+          new ConfirmModal(
+            this.app,
+            t("settings.resetCounterConfirm"),
+            () => {
+              void this.resetCounter();
+            },
+            t("settings.resetCounter")
+          ).open();
+        })
+    );
 
     new Setting(containerEl)
       .setName(t("settings.section.integration"))
@@ -113,6 +170,27 @@ export class Cards4LinksSettingTab extends PluginSettingTab {
             await this.plugin.saveSettings();
           })
       );
+
+    if (this.plugin.settings.hoverEnhance) {
+      new Setting(containerEl)
+        .setName(t("settings.hoverDuration"))
+        .setDesc(t("settings.hoverDurationDesc"))
+        .addDropdown((dropdown) =>
+          dropdown
+            .addOption("0", t("settings.hoverDuration.0"))
+            .addOption("500", t("settings.hoverDuration.500"))
+            .addOption("1000", t("settings.hoverDuration.1000"))
+            .addOption("1500", t("settings.hoverDuration.1500"))
+            .addOption("2000", t("settings.hoverDuration.2000"))
+            .addOption("3000", t("settings.hoverDuration.3000"))
+            .addOption("5000", t("settings.hoverDuration.5000"))
+            .setValue(String(this.plugin.settings.hoverTooltipDurationMs))
+            .onChange(async (value) => {
+              this.plugin.settings.hoverTooltipDurationMs = parseInt(value);
+              await this.plugin.saveSettings();
+            })
+        );
+    }
 
     new Setting(containerEl)
       .setName(t("settings.section.style"))
@@ -260,48 +338,12 @@ export class Cards4LinksSettingTab extends PluginSettingTab {
             })
         );
     }
+  }
 
-    new Setting(containerEl)
-      .setName(t("settings.section.plugin"))
-      .setHeading();
-
-    new Setting(containerEl)
-      .setName(t("settings.language"))
-      .setDesc(t("settings.languageDesc"))
-      .addDropdown((dropdown) =>
-        dropdown
-          .addOption("auto", `🌐 ${t("settings.language.auto")}`)
-          .addOption("en", `🇬🇧 ${t("settings.language.en")}`)
-          .addOption("it", `🇮🇹 ${t("settings.language.it")}`)
-          .setValue(this.plugin.settings.language)
-          .onChange(async (value) => {
-            if (value !== "auto" && value !== "en" && value !== "it") return;
-            this.plugin.setLanguage(value);
-            await this.plugin.saveSettings();
-            this.display();
-          })
-      );
-
-    const counterSetting = new Setting(containerEl)
-      .setName(t("settings.cardsCreated"))
-      .setDesc(
-        t("settings.cardsCreatedDesc", {
-          count: this.plugin.settings.cardsCreated,
-        })
-      );
-
-    counterSetting.addButton((btn) =>
-      btn
-        .setButtonText(t("settings.resetCounter"))
-        .setWarning()
-        .onClick(async () => {
-          const confirmed = window.confirm(t("settings.resetCounterConfirm"));
-          if (!confirmed) return;
-          this.plugin.settings.cardsCreated = 0;
-          this.plugin.settings.milestonesShown = [];
-          await this.plugin.saveSettings();
-          this.display();
-        })
-    );
+  private async resetCounter(): Promise<void> {
+    this.plugin.settings.cardsCreated = 0;
+    this.plugin.settings.milestonesShown = [];
+    await this.plugin.saveSettings();
+    this.display();
   }
 }

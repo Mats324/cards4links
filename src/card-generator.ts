@@ -38,8 +38,8 @@ export class CardGenerator {
     const start = text.indexOf(placeholder);
 
     if (start < 0) {
-      console.log(
-        `Could not find placeholder "${placeholder}" in editor, bailing out; url ${url}`
+      console.warn(
+        `Cards4Links: could not find placeholder "${placeholder}" in editor, bailing out; url ${url}`
       );
       return;
     }
@@ -100,7 +100,7 @@ export class CardGenerator {
     const start = text.indexOf(placeholder);
 
     if (start < 0) {
-      console.log(
+      console.warn(
         `Cards4Links: could not find placeholder "${placeholder}" in editor`
       );
       return;
@@ -161,14 +161,14 @@ export class CardGenerator {
       const res = await requestUrl({ url });
 
       if (res.status !== 200) {
-        console.log(`Cards4Links: bad response status ${res.status}`);
+        console.warn(`Cards4Links: bad response status ${res.status}`);
         return undefined;
       }
 
       const parser = new MetadataParser(url, res.text);
       return await parser.parse();
     } catch (e) {
-      console.log("Cards4Links fetch error:", e);
+      console.error("Cards4Links fetch error:", e);
       return undefined;
     }
   }
@@ -205,7 +205,7 @@ export class CardGenerator {
 
       metadata.imageLocal = `${folder}/${filename}`;
     } catch (e) {
-      console.log("Cards4Links: failed to cache image", e);
+      console.error("Cards4Links: failed to cache image", e);
     }
   }
 

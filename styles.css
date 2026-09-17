@@ -271,24 +271,56 @@
   color: var(--text-warning) !important;
 }
 
-/* Hover-to-convert tooltip */
+/* Hover-to-convert popover */
 .cards4links-hover-tooltip {
+  position: absolute;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: var(--size-2-2);
+  min-height: var(--input-height);
   padding: var(--size-2-1);
-  border-radius: var(--radius-m);
   background: var(--background-primary);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
   border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-m);
+  box-shadow: 0 2px 8px var(--background-modifier-box-shadow);
+  animation: cards4links-tooltip-in 120ms ease;
+}
+
+@keyframes cards4links-tooltip-in {
+  from {
+    opacity: 0;
+    transform: translateY(2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cards4links-hover-tooltip {
+    animation: none;
+  }
 }
 
 .cards4links-hover-convert {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--size-2-1);
   border: none;
   background: transparent;
   color: var(--text-muted);
   padding: var(--size-2-1) var(--size-2-2);
   border-radius: var(--radius-s);
   font-size: var(--font-ui-small);
+  line-height: 1;
   cursor: pointer;
   transition: background-color 150ms ease, color 150ms ease;
+}
+
+.cards4links-hover-convert .svg-icon {
+  color: var(--interactive-accent);
 }
 
 .cards4links-hover-convert:hover {
@@ -299,6 +331,11 @@
 .cards4links-hover-convert:focus-visible {
   outline: 2px solid var(--interactive-accent);
   outline-offset: 2px;
+}
+
+.cards4links-hover-url:hover {
+  background-color: var(--background-modifier-hover);
+  border-radius: var(--radius-s);
 }
 
 /* Focus visible for accessibility */

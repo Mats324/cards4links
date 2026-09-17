@@ -14,6 +14,11 @@ import { LanguageSetting, TKey, resolveLang, setLanguage as applyLang, t } from 
 
 const WELCOME_DELAY_MS = 1500;
 
+interface AppSettingManager {
+  open(): void;
+  openTabById(id: string): void;
+}
+
 const CARD_MILESTONES: { threshold: number; key: TKey }[] = [
   { threshold: 1, key: "milestone.1" },
   { threshold: 3, key: "milestone.3" },
@@ -42,6 +47,7 @@ export default class Cards4Links extends Plugin {
     this.registerEditorExtension(
       hoverEnhanceExtension(
         () => this.settings.hoverEnhance,
+        () => this.settings.hoverTooltipDurationMs,
         (payload) => {
           void this.convertHoveredUrl(payload);
         }
@@ -129,7 +135,9 @@ export default class Cards4Links extends Plugin {
       name: t("command.openSettings"),
       hotkeys: [{ modifiers: ["Mod", "Shift"], key: "," }],
       callback: () => {
-        const setting = (this.app as any).setting;
+        const setting = (
+          this.app as unknown as { setting: AppSettingManager }
+        ).setting;
         setting.open();
         setting.openTabById("cards-for-links");
       },
@@ -357,6 +365,7 @@ export default class Cards4Links extends Plugin {
 
   private onCardsCreated(count: number): void {
     this.settings.cardsCreated += count;
+    this.settings.globalCardsCreated += count;
 
     const newTotal = this.settings.cardsCreated;
     for (const milestone of CARD_MILESTONES) {

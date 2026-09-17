@@ -117,7 +117,7 @@ export async function deleteFiles(
     const path = `${folder}/${name}`;
     const file = app.vault.getAbstractFileByPath(path);
     if (file) {
-      await app.vault.delete(file);
+      await app.fileManager.trashFile(file);
     }
   }
   await removeFromManifest(app, folder, filenames);

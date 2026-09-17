@@ -179,18 +179,22 @@ export class CacheCleanupModal extends Modal {
       cls: "mod-cta",
       text: t("cache.deleteSelected"),
     });
-    deleteBtn.addEventListener("click", async () => {
-      const selected = this.rows.filter((r) => r.checked);
-      if (selected.length === 0) {
-        new Notice(t("notice.noFilesSelected"));
-        return;
-      }
-      const filenames = selected.map((r) => r.entry.filename);
-      await deleteFiles(this.app, this.folder, filenames);
-      this.rows = this.rows.filter((r) => !r.checked);
-      new Notice(t("notice.deletedFiles", { count: filenames.length }));
-      this.render();
+    deleteBtn.addEventListener("click", () => {
+      void this.handleDelete();
     });
+  }
+
+  private async handleDelete(): Promise<void> {
+    const selected = this.rows.filter((r) => r.checked);
+    if (selected.length === 0) {
+      new Notice(t("notice.noFilesSelected"));
+      return;
+    }
+    const filenames = selected.map((r) => r.entry.filename);
+    await deleteFiles(this.app, this.folder, filenames);
+    this.rows = this.rows.filter((r) => !r.checked);
+    new Notice(t("notice.deletedFiles", { count: filenames.length }));
+    this.render();
   }
 
   onClose(): void {

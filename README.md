@@ -26,7 +26,7 @@ Right-click in the editor → **"Paste URL and enhance to card link"**.
 
 - **Paste & Enhance** — Paste a URL and instantly get a styled card
     - **Context Menu** — Right-click any URL to enhance it
-- **Enhance on Hover** — Hover a URL in the editor and click "Convert to card"
+- **Enhance on Hover** — Hover a URL in the editor to reveal a polished "Convert to card" action (custom popover, icon + label, configurable tooltip lifetime)
 - **Rich Metadata** — Auto-fetches Open Graph data (title, description, image)
 - **Multiple Views** — Choose between Card, Compact, and Minimal layouts
 - **Watched/Read Tracking** — Mark video cards as "Watched" and articles as "Read"
@@ -37,7 +37,7 @@ Right-click in the editor → **"Paste URL and enhance to card link"**.
 - **Cache Cleanup** — Browse and delete cached images from a dedicated modal
 - **Localized (EN/IT)** — Interface language follows Obsidian, with an optional manual override (Settings → Language)
 - **Milestone Notifications** — Get useful tips as you create your 1st, 5th, 10th… card, plus a welcome notice on first activation
-- **Card Counter** — Track how many cards you've created (visible in Settings, with a reset option)
+- **Card Counter** — Track how many cards you've created (visible in Settings, with a reset option), plus a global lifetime total that is never reset
 
 ### Specific Features
 - **Image Placeholder** — Click a broken or missing thumbnail to set a custom image URL
@@ -84,7 +84,8 @@ Settings are organized into four sections.
 |---------|-------------|
 | Enhance Default Paste | Auto-fetch metadata when pasting a URL |
 | Show Commands in Menu | Show in right-click context menu |
-| Enhance on Hover | Hover a URL to show a "Convert to card" button |
+| Enhance on Hover | Hover a URL to reveal a "Convert to card" action |
+| Tooltip Lifetime | How long the hover tooltip stays visible (0–5 s) |
 
 ### Card Style
 
@@ -110,7 +111,7 @@ Settings are organized into four sections.
 | Setting | Description |
 |---------|-------------|
 | Language | 🌐 Auto (follows Obsidian) / 🇬🇧 English / 🇮🇹 Italiano |
-| Cards Created | Total cards generated since last reset (with Reset button) |
+| Cards Created | Cards generated since last reset (with Reset button) plus a total lifetime count that is never reset |
 
 ## ❤️ Support
 
