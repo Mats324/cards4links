@@ -64,6 +64,8 @@ Select 2+ URLs and run **"Create carousel from selected URLs"** (`Ctrl+Shift+C`)
 
 ## Installation
 
+> **Requires Obsidian 1.13.0 or later.**
+
 ### From Obsidian Community Store (pending)
 1. Open Obsidian Settings → Community Plugins
 2. Browse → Search "Cards4Links"

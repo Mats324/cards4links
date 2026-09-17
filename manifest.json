@@ -1,8 +1,8 @@
 {
   "id": "cards-for-links",
   "name": "Cards4Links",
-  "version": "1.4.3",
-  "minAppVersion": "1.5.0",
+  "version": "1.4.4",
+  "minAppVersion": "1.13.0",
   "description": "Paste URLs to generate beautiful card-styled links.",
   "author": "Matthew",
   "isDesktopOnly": false

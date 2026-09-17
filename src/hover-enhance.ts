@@ -125,10 +125,10 @@ export function hoverEnhanceExtension(
       private urlSpanFromEvent(event: MouseEvent): HTMLElement | null {
         let node = event.target as Node | null;
         if (!node) return null;
-        if (!(node instanceof Element)) node = node.parentElement;
-        if (!(node instanceof Element)) return null;
+        if (!node.instanceOf(Element)) node = node.parentElement;
+        if (!node || !node.instanceOf(Element)) return null;
         const el = node.closest(".cards4links-hover-url");
-        return el instanceof HTMLElement ? el : null;
+        return el && el.instanceOf(HTMLElement) ? el : null;
       }
 
       private isOverPopover(clientX: number, clientY: number): boolean {
@@ -301,7 +301,7 @@ export function hoverEnhanceExtension(
         if (this.lastClientX < 0) return false;
         const el = document.elementFromPoint(this.lastClientX, this.lastClientY);
         if (this.popover && el && this.popover.contains(el)) return true;
-        if (el instanceof Element) {
+        if (el && el.instanceOf(Element)) {
           return (
             el.closest(".cards4links-hover-url") === this.activeSpan &&
             this.activeSpan !== null

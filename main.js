@@ -696,6 +696,9 @@ function isCardView(v) {
 function isCardTheme(v) {
   return v === "default" || v === "light" || v === "dark";
 }
+function isCacheLocation(v) {
+  return v === "vault-absolute" || v === "note-relative";
+}
 var DEFAULT_SETTINGS = {
   language: "auto",
   enhanceDefaultPaste: false,
@@ -721,137 +724,271 @@ var Cards4LinksSettingTab = class extends import_obsidian5.PluginSettingTab {
     super(app, plugin);
     this.plugin = plugin;
   }
-  display() {
-    const { containerEl } = this;
-    containerEl.empty();
-    new import_obsidian5.Setting(containerEl).setName(t("settings.section.plugin")).setHeading();
-    new import_obsidian5.Setting(containerEl).setName(t("settings.language")).setDesc(t("settings.languageDesc")).addDropdown(
-      (dropdown) => dropdown.addOption("auto", `\u{1F310} ${t("settings.language.auto")}`).addOption("en", `\u{1F1EC}\u{1F1E7} ${t("settings.language.en")}`).addOption("it", `\u{1F1EE}\u{1F1F9} ${t("settings.language.it")}`).setValue(this.plugin.settings.language).onChange((value) => __async(this, null, function* () {
-        if (value !== "auto" && value !== "en" && value !== "it") return;
-        this.plugin.setLanguage(value);
-        yield this.plugin.saveSettings();
-        this.display();
-      }))
-    );
-    const counterSetting = new import_obsidian5.Setting(containerEl).setName(t("settings.cardsCreated")).setDesc(
-      t("settings.cardsCreatedDesc", {
-        count: this.plugin.settings.cardsCreated
-      })
-    );
-    counterSetting.infoEl.createDiv({
-      cls: "setting-item-description",
-      text: t("settings.globalCardsCreated", {
-        count: this.plugin.settings.globalCardsCreated
-      })
-    });
-    counterSetting.addButton(
-      (btn) => btn.setButtonText(t("settings.resetCounter")).setDestructive().onClick(() => {
-        new ConfirmModal(
-          this.app,
-          t("settings.resetCounterConfirm"),
-          () => {
-            void this.resetCounter();
+  getSettingDefinitions() {
+    return [
+      {
+        type: "group",
+        heading: t("settings.section.plugin"),
+        items: [
+          {
+            name: t("settings.language"),
+            desc: t("settings.languageDesc"),
+            control: {
+              key: "language",
+              type: "dropdown",
+              options: {
+                auto: `\u{1F310} ${t("settings.language.auto")}`,
+                en: `\u{1F1EC}\u{1F1E7} ${t("settings.language.en")}`,
+                it: `\u{1F1EE}\u{1F1F9} ${t("settings.language.it")}`
+              }
+            }
           },
-          t("settings.resetCounter")
-        ).open();
-      })
-    );
-    new import_obsidian5.Setting(containerEl).setName(t("settings.section.integration")).setHeading();
-    new import_obsidian5.Setting(containerEl).setName(t("settings.enhancePaste")).setDesc(t("settings.enhancePasteDesc")).addToggle(
-      (toggle) => toggle.setValue(this.plugin.settings.enhanceDefaultPaste).onChange((value) => __async(this, null, function* () {
-        this.plugin.settings.enhanceDefaultPaste = value;
-        yield this.plugin.saveSettings();
-      }))
-    );
-    new import_obsidian5.Setting(containerEl).setName(t("settings.showInMenu")).setDesc(t("settings.showInMenuDesc")).addToggle(
-      (toggle) => toggle.setValue(this.plugin.settings.showInMenuItem).onChange((value) => __async(this, null, function* () {
-        this.plugin.settings.showInMenuItem = value;
-        yield this.plugin.saveSettings();
-      }))
-    );
-    new import_obsidian5.Setting(containerEl).setName(t("settings.hoverEnhance")).setDesc(t("settings.hoverEnhanceDesc")).addToggle(
-      (toggle) => toggle.setValue(this.plugin.settings.hoverEnhance).onChange((value) => __async(this, null, function* () {
-        this.plugin.settings.hoverEnhance = value;
-        yield this.plugin.saveSettings();
-      }))
-    );
-    if (this.plugin.settings.hoverEnhance) {
-      new import_obsidian5.Setting(containerEl).setName(t("settings.hoverDuration")).setDesc(t("settings.hoverDurationDesc")).addDropdown(
-        (dropdown) => dropdown.addOption("0", t("settings.hoverDuration.0")).addOption("500", t("settings.hoverDuration.500")).addOption("1000", t("settings.hoverDuration.1000")).addOption("1500", t("settings.hoverDuration.1500")).addOption("2000", t("settings.hoverDuration.2000")).addOption("3000", t("settings.hoverDuration.3000")).addOption("5000", t("settings.hoverDuration.5000")).setValue(String(this.plugin.settings.hoverTooltipDurationMs)).onChange((value) => __async(this, null, function* () {
-          this.plugin.settings.hoverTooltipDurationMs = parseInt(value);
-          yield this.plugin.saveSettings();
-        }))
-      );
-    }
-    new import_obsidian5.Setting(containerEl).setName(t("settings.section.style")).setHeading();
-    new import_obsidian5.Setting(containerEl).setName(t("settings.defaultView")).setDesc(t("settings.defaultViewDesc")).addDropdown(
-      (dropdown) => dropdown.addOption("card", t("settings.view.card")).addOption("compact", t("settings.view.compact")).addOption("minimal", t("settings.view.minimal")).setValue(this.plugin.settings.defaultView).onChange((value) => __async(this, null, function* () {
-        if (!isCardView(value)) return;
-        this.plugin.settings.defaultView = value;
-        yield this.plugin.saveSettings();
-      }))
-    );
-    new import_obsidian5.Setting(containerEl).setName(t("settings.theme")).setDesc(t("settings.themeDesc")).addDropdown(
-      (dropdown) => dropdown.addOption("default", t("settings.theme.default")).addOption("light", t("settings.theme.light")).addOption("dark", t("settings.theme.dark")).setValue(this.plugin.settings.theme).onChange((value) => __async(this, null, function* () {
-        if (!isCardTheme(value)) return;
-        this.plugin.settings.theme = value;
-        yield this.plugin.saveSettings();
-      }))
-    );
-    new import_obsidian5.Setting(containerEl).setName(t("settings.thumbnailPosition")).setDesc(t("settings.thumbnailPositionDesc")).addDropdown(
-      (dropdown) => dropdown.addOption("right", t("settings.thumbnail.right")).addOption("left", t("settings.thumbnail.left")).addOption("none", t("settings.thumbnail.none")).setValue(this.plugin.settings.thumbnailPosition).onChange((value) => __async(this, null, function* () {
-        if (!isThumbnailPosition(value)) return;
-        this.plugin.settings.thumbnailPosition = value;
-        yield this.plugin.saveSettings();
-      }))
-    );
-    new import_obsidian5.Setting(containerEl).setName(t("settings.enableWatched")).setDesc(t("settings.enableWatchedDesc")).addToggle(
-      (toggle) => toggle.setValue(this.plugin.settings.enableWatched).onChange((value) => __async(this, null, function* () {
-        this.plugin.settings.enableWatched = value;
-        yield this.plugin.saveSettings();
-      }))
-    );
-    new import_obsidian5.Setting(containerEl).setName(t("settings.section.cache")).setHeading();
-    new import_obsidian5.Setting(containerEl).setName(t("settings.cacheImages")).setDesc(t("settings.cacheImagesDesc")).addToggle(
-      (toggle) => toggle.setValue(this.plugin.settings.cacheImages).onChange((value) => __async(this, null, function* () {
-        this.plugin.settings.cacheImages = value;
-        yield this.plugin.saveSettings();
-        this.display();
-      }))
-    );
-    if (this.plugin.settings.cacheImages) {
-      new import_obsidian5.Setting(containerEl).setName(t("settings.cacheStorage")).setDesc(t("settings.cacheStorageDesc")).addDropdown(
-        (dropdown) => dropdown.addOption("vault-absolute", t("settings.cacheLocation.vault")).addOption("note-relative", t("settings.cacheLocation.note")).setValue(this.plugin.settings.cacheLocation).onChange((value) => __async(this, null, function* () {
-          if (value !== "vault-absolute" && value !== "note-relative")
-            return;
-          this.plugin.settings.cacheLocation = value;
-          yield this.plugin.saveSettings();
-          this.display();
-        }))
-      );
-      if (this.plugin.settings.cacheLocation === "vault-absolute") {
-        new import_obsidian5.Setting(containerEl).setName(t("settings.cacheFolder")).setDesc(t("settings.cacheFolderDesc")).addText(
-          (text) => text.setValue(this.plugin.settings.cacheFolder).onChange((value) => __async(this, null, function* () {
-            this.plugin.settings.cacheFolder = value || "cards4links-cache";
-            yield this.plugin.saveSettings();
-          }))
+          this.counterSetting()
+        ]
+      },
+      {
+        type: "group",
+        heading: t("settings.section.integration"),
+        items: [
+          {
+            name: t("settings.enhancePaste"),
+            desc: t("settings.enhancePasteDesc"),
+            control: { key: "enhanceDefaultPaste", type: "toggle" }
+          },
+          {
+            name: t("settings.showInMenu"),
+            desc: t("settings.showInMenuDesc"),
+            control: { key: "showInMenuItem", type: "toggle" }
+          },
+          {
+            name: t("settings.hoverEnhance"),
+            desc: t("settings.hoverEnhanceDesc"),
+            control: { key: "hoverEnhance", type: "toggle" }
+          },
+          {
+            name: t("settings.hoverDuration"),
+            desc: t("settings.hoverDurationDesc"),
+            visible: () => this.plugin.settings.hoverEnhance,
+            control: {
+              key: "hoverTooltipDurationMs",
+              type: "dropdown",
+              options: {
+                "0": t("settings.hoverDuration.0"),
+                "500": t("settings.hoverDuration.500"),
+                "1000": t("settings.hoverDuration.1000"),
+                "1500": t("settings.hoverDuration.1500"),
+                "2000": t("settings.hoverDuration.2000"),
+                "3000": t("settings.hoverDuration.3000"),
+                "5000": t("settings.hoverDuration.5000")
+              }
+            }
+          }
+        ]
+      },
+      {
+        type: "group",
+        heading: t("settings.section.style"),
+        items: [
+          {
+            name: t("settings.defaultView"),
+            desc: t("settings.defaultViewDesc"),
+            control: {
+              key: "defaultView",
+              type: "dropdown",
+              options: {
+                card: t("settings.view.card"),
+                compact: t("settings.view.compact"),
+                minimal: t("settings.view.minimal")
+              }
+            }
+          },
+          {
+            name: t("settings.theme"),
+            desc: t("settings.themeDesc"),
+            control: {
+              key: "theme",
+              type: "dropdown",
+              options: {
+                default: t("settings.theme.default"),
+                light: t("settings.theme.light"),
+                dark: t("settings.theme.dark")
+              }
+            }
+          },
+          {
+            name: t("settings.thumbnailPosition"),
+            desc: t("settings.thumbnailPositionDesc"),
+            control: {
+              key: "thumbnailPosition",
+              type: "dropdown",
+              options: {
+                right: t("settings.thumbnail.right"),
+                left: t("settings.thumbnail.left"),
+                none: t("settings.thumbnail.none")
+              }
+            }
+          },
+          {
+            name: t("settings.enableWatched"),
+            desc: t("settings.enableWatchedDesc"),
+            control: { key: "enableWatched", type: "toggle" }
+          }
+        ]
+      },
+      {
+        type: "group",
+        heading: t("settings.section.cache"),
+        items: [
+          {
+            name: t("settings.cacheImages"),
+            desc: t("settings.cacheImagesDesc"),
+            control: { key: "cacheImages", type: "toggle" }
+          },
+          {
+            name: t("settings.cacheStorage"),
+            desc: t("settings.cacheStorageDesc"),
+            visible: () => this.plugin.settings.cacheImages,
+            control: {
+              key: "cacheLocation",
+              type: "dropdown",
+              options: {
+                "vault-absolute": t("settings.cacheLocation.vault"),
+                "note-relative": t("settings.cacheLocation.note")
+              }
+            }
+          },
+          {
+            name: t("settings.cacheFolder"),
+            desc: t("settings.cacheFolderDesc"),
+            visible: () => this.plugin.settings.cacheImages && this.plugin.settings.cacheLocation === "vault-absolute",
+            control: { key: "cacheFolder", type: "text" }
+          },
+          {
+            name: t("settings.cacheTtl"),
+            desc: t("settings.cacheTtlDesc"),
+            visible: () => this.plugin.settings.cacheImages,
+            control: {
+              key: "cacheTTL",
+              type: "dropdown",
+              options: {
+                "7": t("settings.ttl.7"),
+                "30": t("settings.ttl.30"),
+                "90": t("settings.ttl.90"),
+                "180": t("settings.ttl.180"),
+                "0": t("settings.ttl.0")
+              }
+            }
+          },
+          this.manageCacheSetting()
+        ]
+      }
+    ];
+  }
+  counterSetting() {
+    return {
+      name: t("settings.cardsCreated"),
+      render: (setting) => {
+        setting.setName(t("settings.cardsCreated")).setDesc(
+          t("settings.cardsCreatedDesc", {
+            count: this.plugin.settings.cardsCreated
+          })
+        );
+        setting.infoEl.createDiv({
+          cls: "setting-item-description",
+          text: t("settings.globalCardsCreated", {
+            count: this.plugin.settings.globalCardsCreated
+          })
+        });
+        setting.addButton(
+          (btn) => btn.setButtonText(t("settings.resetCounter")).setDestructive().onClick(() => {
+            new ConfirmModal(
+              this.app,
+              t("settings.resetCounterConfirm"),
+              () => {
+                void this.resetCounter();
+              },
+              t("settings.resetCounter")
+            ).open();
+          })
         );
       }
-      new import_obsidian5.Setting(containerEl).setName(t("settings.cacheTtl")).setDesc(t("settings.cacheTtlDesc")).addDropdown(
-        (dropdown) => dropdown.addOption("7", t("settings.ttl.7")).addOption("30", t("settings.ttl.30")).addOption("90", t("settings.ttl.90")).addOption("180", t("settings.ttl.180")).addOption("0", t("settings.ttl.0")).setValue(String(this.plugin.settings.cacheTTL)).onChange((value) => __async(this, null, function* () {
-          this.plugin.settings.cacheTTL = parseInt(value);
-          yield this.plugin.saveSettings();
-        }))
-      );
-      new import_obsidian5.Setting(containerEl).setName(t("settings.manageCache")).setDesc(t("settings.manageCacheDesc")).addButton(
-        (btn) => btn.setButtonText(t("settings.manageCacheButton")).onClick(() => {
-          const modal = new CacheCleanupModal(
-            this.plugin.app,
-            this.plugin
-          );
-          modal.open();
-        })
-      );
+    };
+  }
+  manageCacheSetting() {
+    return {
+      name: t("settings.manageCache"),
+      desc: t("settings.manageCacheDesc"),
+      render: (setting) => {
+        setting.setName(t("settings.manageCache")).setDesc(t("settings.manageCacheDesc")).addButton(
+          (btn) => btn.setButtonText(t("settings.manageCacheButton")).onClick(() => {
+            const modal = new CacheCleanupModal(
+              this.plugin.app,
+              this.plugin
+            );
+            modal.open();
+          })
+        );
+      }
+    };
+  }
+  getControlValue(key) {
+    const s = this.plugin.settings;
+    if (key === "hoverTooltipDurationMs" || key === "cacheTTL") {
+      return String(s[key]);
+    }
+    return s[key];
+  }
+  setControlValue(key, value) {
+    const s = this.plugin.settings;
+    switch (key) {
+      case "language": {
+        const lang = String(value);
+        if (lang !== "auto" && lang !== "en" && lang !== "it") return;
+        s.language = lang;
+        this.plugin.setLanguage(lang);
+        return this.plugin.saveSettings().then(() => {
+          this.update();
+        });
+      }
+      case "hoverTooltipDurationMs":
+        s.hoverTooltipDurationMs = parseInt(String(value), 10);
+        break;
+      case "cacheTTL":
+        s.cacheTTL = parseInt(String(value), 10);
+        break;
+      case "cacheFolder":
+        s.cacheFolder = String(value) || "cards4links-cache";
+        break;
+      case "defaultView": {
+        const v = String(value);
+        if (!isCardView(v)) return;
+        s.defaultView = v;
+        break;
+      }
+      case "theme": {
+        const v = String(value);
+        if (!isCardTheme(v)) return;
+        s.theme = v;
+        break;
+      }
+      case "thumbnailPosition": {
+        const v = String(value);
+        if (!isThumbnailPosition(v)) return;
+        s.thumbnailPosition = v;
+        break;
+      }
+      case "cacheLocation": {
+        const v = String(value);
+        if (!isCacheLocation(v)) return;
+        s.cacheLocation = v;
+        break;
+      }
+      default:
+        s[key] = value;
+    }
+    void this.plugin.saveSettings();
+    if (key === "hoverEnhance" || key === "cacheImages" || key === "cacheLocation") {
+      this.refreshDomState();
     }
   }
   resetCounter() {
@@ -859,7 +996,7 @@ var Cards4LinksSettingTab = class extends import_obsidian5.PluginSettingTab {
       this.plugin.settings.cardsCreated = 0;
       this.plugin.settings.milestonesShown = [];
       yield this.plugin.saveSettings();
-      this.display();
+      this.update();
     });
   }
 };
@@ -1989,10 +2126,10 @@ function hoverEnhanceExtension(enabled, getTooltipDurationMs, onConvert) {
       urlSpanFromEvent(event) {
         let node = event.target;
         if (!node) return null;
-        if (!(node instanceof Element)) node = node.parentElement;
-        if (!(node instanceof Element)) return null;
+        if (!node.instanceOf(Element)) node = node.parentElement;
+        if (!node || !node.instanceOf(Element)) return null;
         const el = node.closest(".cards4links-hover-url");
-        return el instanceof HTMLElement ? el : null;
+        return el && el.instanceOf(HTMLElement) ? el : null;
       }
       isOverPopover(clientX, clientY) {
         const el = this.popover;
@@ -2137,7 +2274,7 @@ function hoverEnhanceExtension(enabled, getTooltipDurationMs, onConvert) {
         if (this.lastClientX < 0) return false;
         const el = document.elementFromPoint(this.lastClientX, this.lastClientY);
         if (this.popover && el && this.popover.contains(el)) return true;
-        if (el instanceof Element) {
+        if (el && el.instanceOf(Element)) {
           return el.closest(".cards4links-hover-url") === this.activeSpan && this.activeSpan !== null;
         }
         return false;
@@ -2294,8 +2431,7 @@ var Cards4Links = class extends import_obsidian9.Plugin {
       name: t("command.pasteAndEnhance"),
       editorCallback: (editor) => __async(this, null, function* () {
         yield this.manualPasteAndEnhance(editor);
-      }),
-      hotkeys: []
+      })
     });
     this.addCommand({
       id: "upgrade-old-cards",

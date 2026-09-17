@@ -95,7 +95,6 @@ export default class Cards4Links extends Plugin {
       editorCallback: async (editor: Editor) => {
         await this.manualPasteAndEnhance(editor);
       },
-      hotkeys: [],
     });
 
     this.addCommand({
